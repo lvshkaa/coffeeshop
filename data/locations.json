@@ -1,0 +1,78 @@
+[
+  {
+    "id": "alfarabi5",
+    "address": "Аль-Фараби 5",
+    "sub": "",
+    "open": "07:00",
+    "close": "23:00",
+    "address_kk": "Әл-Фараби 5",
+    "address_en": "Al-Farabi 5"
+  },
+  {
+    "id": "auezova2",
+    "address": "Ауэзова 2",
+    "sub": "",
+    "open": "07:00",
+    "close": "23:00",
+    "address_kk": "Әуезов 2",
+    "address_en": "Auezov 2"
+  },
+  {
+    "id": "konaev12",
+    "address": "Конаев 12/2",
+    "sub": "",
+    "open": "07:00",
+    "close": "22:00",
+    "address_kk": "Қонаев 12/2",
+    "address_en": "Konaev 12/2"
+  },
+  {
+    "id": "omarova12",
+    "address": "Омарова 12",
+    "sub": "",
+    "open": "09:00",
+    "close": "21:00",
+    "address_kk": "Омаров 12",
+    "address_en": "Omarov 12"
+  },
+  {
+    "id": "kunaev4",
+    "address": "Кунаева 4",
+    "sub": "Казмедиа",
+    "open": "08:00",
+    "close": "20:00",
+    "address_kk": "Қонаев 4",
+    "address_en": "Kunaev 4",
+    "sub_kk": "Қазмедиа",
+    "sub_en": "Kazmedia"
+  },
+  {
+    "id": "respublika24",
+    "address": "Республика 24",
+    "sub": "бц Парасат",
+    "open": "08:00",
+    "close": "19:00",
+    "address_kk": "Республика 24",
+    "address_en": "Respublika 24",
+    "sub_kk": "Парасат бизнес-орталығы",
+    "sub_en": "Parasat business center"
+  },
+  {
+    "id": "turan50",
+    "address": "Туран 50",
+    "sub": "ULYTAU GROUP",
+    "open": "09:00",
+    "close": "19:00",
+    "address_kk": "Тұран 50",
+    "address_en": "Turan 50"
+  },
+  {
+    "id": "turan13",
+    "address": "Туран 13",
+    "sub": "",
+    "open": "09:00",
+    "close": "18:00",
+    "address_kk": "Тұран 13",
+    "address_en": "Turan 13"
+  }
+]

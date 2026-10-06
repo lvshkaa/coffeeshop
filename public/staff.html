@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru" data-title="st.tab">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Заказы — DrinkStar</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@500;600;700;800&family=Noto+Sans:wght@500;600;700;800&family=Noto+Serif:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--serif:'Fraunces',Georgia,serif;--sans:'Manrope',system-ui,sans-serif}
+html:not([lang="en"]){--serif:'Noto Serif',Georgia,serif;--sans:'Noto Sans',system-ui,sans-serif}
+:root{--cream:#f7efe1;--paper:#fffaf1;--espresso:#3a2a1e;--brown:#5b4128;--caramel:#b9772f;--caramel-2:#d9a05b;--muted:#8a7560;--line:#e3d3ba;--green:#40691f;--green-bg:#e3efd6}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:var(--sans);background:var(--cream);color:var(--espresso);min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+.top{display:flex;align-items:center;gap:12px;padding:14px max(22px,env(safe-area-inset-right)) 14px max(22px,env(safe-area-inset-left));padding-top:max(14px,env(safe-area-inset-top));background:var(--espresso);color:var(--cream);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.top h1{font-family:var(--serif);font-size:1.3rem;margin-right:auto}
+.top select,.top button{font-family:inherit;font-weight:700;font-size:16px;padding:9px 14px;border-radius:10px;border:none;cursor:pointer;min-height:42px}
+.top select{background:#4a3524;color:var(--cream);-webkit-appearance:none;appearance:none;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--cream) 50%),linear-gradient(135deg,var(--cream) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.top button{background:var(--caramel-2);color:var(--espresso)}
+.top .snd.off{background:#4a3524;color:#cdb99d}
+.live{font-size:.78rem;color:#cdb99d}
+.live::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#7cc24a;margin-right:6px;animation:b 1.5s infinite}
+.live.err::before{background:#d9552b;animation:none}
+@keyframes b{50%{opacity:.3}}
+.lang{display:inline-flex;border:1.5px solid #6a523c;border-radius:999px;overflow:hidden}
+.lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.75rem;padding:8px 11px;color:#cdb99d;cursor:pointer;min-height:0}
+.lang button.on{background:var(--cream);color:var(--espresso)}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:20px max(22px,env(safe-area-inset-right)) 20px max(22px,env(safe-area-inset-left));align-items:start}
+.col h2{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--brown);margin-bottom:12px;display:flex;justify-content:space-between}
+.col h2 span{background:var(--espresso);color:var(--cream);border-radius:999px;padding:1px 10px}
+.ord{background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--caramel);border-radius:16px;padding:16px 18px;margin-bottom:12px;box-shadow:0 6px 18px rgba(91,65,40,.08)}
+.ord.new{border-left-color:#d9552b;animation:flash 1.2s 3}
+.ord.ready{border-left-color:var(--green)}
+@keyframes flash{50%{background:#fde8d6}}
+.ord-top{display:flex;justify-content:space-between;align-items:baseline}
+.ord-top b{font-family:var(--serif);font-size:1.8rem}
+.age{font-size:.8rem;font-weight:700;color:var(--muted)}
+.age.late{color:#d9552b}
+.who{font-size:.85rem;color:var(--brown);margin:2px 0 10px}
+.who a{color:var(--caramel);font-weight:700;text-decoration:none}
+.li{padding:6px 0;border-top:1px dashed var(--line);font-weight:700;font-size:.98rem}
+.li small{display:block;font-weight:600;color:var(--caramel);font-size:.82rem}
+.cm{margin-top:8px;background:#fff3d6;border-radius:10px;padding:8px 10px;font-size:.85rem;font-weight:600}
+.acts{display:flex;gap:8px;margin-top:12px}
+.acts button{flex:1;font-family:inherit;font-weight:800;font-size:.95rem;padding:14px;min-height:48px;border-radius:12px;border:none;cursor:pointer;background:var(--espresso);color:var(--cream)}
+.acts button.ok{background:var(--green)}
+.acts button.sec{flex:0 0 auto;background:#efe3cf;color:#9a4a22}
+.empty{color:var(--muted);font-size:.9rem;padding:20px 0;text-align:center;border:1.5px dashed var(--line);border-radius:14px}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;grid-template-columns:minmax(0,1fr);padding:20px}
+.login form{background:var(--paper);padding:34px;border-radius:24px;border:1px solid var(--line);display:grid;gap:14px;width:min(340px,92vw);text-align:center;margin:0 auto}
+.login .lang{justify-self:center;border-color:var(--line);margin-bottom:6px}
+.login .lang button{color:var(--muted)}
+.login .lang button.on{background:var(--espresso);color:var(--cream)}
+.login h1{font-family:var(--serif)}
+.login input{font-size:1.4rem;text-align:center;letter-spacing:.4em;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--cream);font-family:inherit;width:100%}
+.login button.go{padding:14px;border-radius:12px;border:none;background:var(--espresso);color:var(--cream);font-weight:800;font-family:inherit;font-size:1rem;cursor:pointer;min-height:48px}
+.login p{color:#9a4a22;font-size:.85rem;min-height:1.2em;font-weight:600}
+@media(max-width:900px){.board{grid-template-columns:minmax(0,1fr)}}
+.pay{margin-top:10px;border-radius:10px;padding:9px 12px;font-size:.88rem;font-weight:800}
+.pay.ok{background:var(--green-bg);color:var(--green)}
+.pay.due{background:#fde8d6;color:#9a4a22}
+.club{background:var(--caramel);color:#fff;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:800}
+.pay.bonus{background:#fff3df;color:#8a5a14}
+</style>
+</head>
+<body>
+<div class="login" id="login">
+  <form id="loginForm">
+    <div class="lang"></div>
+    <h1>★ DrinkStar<br><span data-i18n="st.login">Персонал</span></h1>
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off" autofocus>
+    <p id="loginErr"></p>
+    <button class="go" data-i18n="st.enter">Войти</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="top">
+    <h1 data-i18n="st.title">★ Заказы</h1>
+    <span class="live" id="live"></span>
+    <div class="lang"></div>
+    <select id="loc" aria-label="Location"></select>
+    <button class="snd" id="snd" type="button"></button>
+    <button id="out" type="button" data-i18n="st.logout">Выйти</button>
+  </div>
+  <div class="board">
+    <div class="col"><h2><span data-i18n="st.col.new">Новые</span> <span id="c-new">0</span></h2><div id="col-new"></div></div>
+    <div class="col"><h2><span data-i18n="st.col.preparing">Готовятся</span> <span id="c-preparing">0</span></h2><div id="col-preparing"></div></div>
+    <div class="col"><h2><span data-i18n="st.col.ready">Готовы к выдаче</span> <span id="c-ready">0</span></h2><div id="col-ready"></div></div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const { LANG } = window.I18N;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = n => n.toLocaleString('ru-RU').replace(/ /g, ' ');
+let pin = sessionStorage.getItem('ds_pin') || '';
+let sound = localStorage.getItem('ds_snd') !== 'off';
+let known = null, orders = [], timer, audio, LOCS = {}, ITEMS = {}, ADDONS = {};
+
+const api = (url, opt = {}) => fetch(url, { ...opt, headers: { 'Content-Type': 'application/json', 'x-staff-pin': pin } });
+
+// Safari и Chrome на iPhone разрешают звук только после касания: создаём и «будим» аудио при первом нажатии
+function unlockAudio() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+  } catch { /* звук недоступен */ }
+}
+['pointerdown', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
+
+function beep() {
+  if (!sound) return;
+  try {
+    unlockAudio();
+    [880, 1174].forEach((f, i) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = f; o.connect(g); g.connect(audio.destination);
+      const at = audio.currentTime + i * .18;
+      g.gain.setValueAtTime(.25, at); g.gain.exponentialRampToValueAtTime(.001, at + .35);
+      o.start(at); o.stop(at + .4);
+    });
+  } catch { /* звук недоступен */ }
+}
+
+function setLive(ok) { const l = $('#live'); l.textContent = t(ok ? 'st.online' : 'st.offline'); l.classList.toggle('err', !ok); }
+function setSndLabel() { $('#snd').classList.toggle('off', !sound); $('#snd').textContent = t(sound ? 'st.sound' : 'st.mute'); }
+
+async function poll() {
+  try {
+    const r = await api('/api/staff/orders');
+    if (r.status === 401 || r.status === 429) return logout();
+    orders = await r.json();
+    setLive(true);
+    const ids = new Set(orders.map(o => o.token));
+    if (known && orders.some(o => o.status === 'new' && !known.has(o.token))) beep();
+    known = ids;
+    render();
+  } catch { setLive(false); }
+}
+
+function ago(ts) {
+  const m = Math.floor((Date.now() - ts) / 60000);
+  return { text: m < 1 ? t('st.now') : t('st.min', { n: m }), late: m >= 8 };
+}
+const itemName = i => (ITEMS[i.id] ? tr(ITEMS[i.id], 'name') : i.name);
+const addonNames = i => (i.addonIds && i.addonIds.length ? i.addonIds.map(id => (ADDONS[id] ? tr(ADDONS[id], 'name') : id)) : i.addons);
+const locName = o => (LOCS[o.locationId] ? tr(LOCS[o.locationId], 'address') : o.location);
+
+function card(o) {
+  const a = ago(o.createdAt);
+  const items = o.items.map(i => { const ad = addonNames(i); return `<div class="li">${i.qty} × ${esc(itemName(i))} ${esc(I18N.num(i.variant))}${ad.length ? `<small>+ ${ad.map(esc).join(', ')}</small>` : ''}</div>`; }).join('');
+  return `<div class="ord ${o.status}">
+    <div class="ord-top"><b>№${o.number}</b><span class="age ${a.late && o.status !== 'ready' ? 'late' : ''}">${a.text}</span></div>
+    <div class="who">${o.member ? `<span class="club">${t('st.club')}</span> ` : ''}${esc(o.name)} · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a>${$('#loc').value === 'all' ? '<br>' + esc(locName(o)) : ''}</div>
+    ${items}
+    ${o.bonusUsed ? `<div class="pay bonus">${t('st.bonuspaid', { n: money(o.bonusUsed) })}</div>` : ''}
+    ${o.comment ? `<div class="cm">💬 ${esc(o.comment)}</div>` : ''}
+    ${o.paid ? `<div class="pay ok">${t('st.paidonline')}</div>` : `<div class="pay due">${t('st.takecash', { n: money(o.payable) })}</div>`}
+    <div class="acts"><button class="${o.status === 'preparing' ? 'ok' : ''}" data-t="${o.token}" data-s="${{ new: 'preparing', preparing: 'ready', ready: 'done' }[o.status]}">${t('st.act.' + o.status)}</button>
+    <button class="sec" data-t="${o.token}" data-s="cancelled" title="${esc(t('st.cancel'))}" aria-label="${esc(t('st.cancel'))}">✕</button></div></div>`;
+}
+
+function render() {
+  const loc = $('#loc').value;
+  const list = orders.filter(o => loc === 'all' || o.locationId === loc).sort((a, b) => a.createdAt - b.createdAt);
+  ['new', 'preparing', 'ready'].forEach(s => {
+    const col = list.filter(o => o.status === s);
+    $('#c-' + s).textContent = col.length;
+    $('#col-' + s).innerHTML = col.map(card).join('') || `<div class="empty">${t('st.empty')}</div>`;
+  });
+}
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-t]');
+  if (!b) return;
+  if (b.dataset.s === 'cancelled' && !confirm(t('st.confirmcancel'))) return;
+  b.disabled = true;
+  await api('/api/staff/orders/' + b.dataset.t, { method: 'PATCH', body: JSON.stringify({ status: b.dataset.s }) });
+  poll();
+});
+
+$('#loc').onchange = render;
+$('#snd').onclick = () => { sound = !sound; localStorage.setItem('ds_snd', sound ? 'on' : 'off'); setSndLabel(); if (sound) beep(); };
+$('#out').onclick = logout;
+
+function logout() { sessionStorage.removeItem('ds_pin'); pin = ''; clearInterval(timer); $('#app').hidden = true; $('#login').hidden = false; }
+
+async function start() {
+  const [locs, menu] = await Promise.all([fetch('/api/locations').then(r => r.json()), fetch('/api/menu').then(r => r.json())]);
+  locs.forEach(l => LOCS[l.id] = l);
+  menu.categories.forEach(c => c.items.forEach(i => ITEMS[i.id] = i));
+  menu.addons.forEach(a => ADDONS[a.id] = a);
+  $('#loc').innerHTML = `<option value="all">${t('st.all')}</option>` + locs.map(l => `<option value="${l.id}">${esc(tr(l, 'address'))}</option>`).join('');
+  setSndLabel(); setLive(true);
+  $('#login').hidden = true; $('#app').hidden = false;
+  await poll(); timer = setInterval(poll, 4000);
+}
+
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault();
+  pin = $('#pin').value;
+  const r = await api('/api/staff/orders');
+  if (r.ok) { sessionStorage.setItem('ds_pin', pin); start(); }
+  else { $('#loginErr').textContent = t('st.badpin'); $('#pin').value = ''; }
+};
+if (pin) api('/api/staff/orders').then(r => r.ok ? start() : logout());
+</script>
+</body>
+</html>

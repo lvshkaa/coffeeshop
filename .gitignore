@@ -1,0 +1,7 @@
+node_modules
+data/orders.json
+data/drinkstar.db
+data/drinkstar.db-wal
+data/drinkstar.db-shm
+.env
+.claude/

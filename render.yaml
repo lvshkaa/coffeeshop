@@ -1,0 +1,21 @@
+# Выкладка на Render.com: New -> Blueprint -> выбрать репозиторий. Платформа сама прочитает этот файл.
+# Сейчас настроен БЕСПЛАТНЫЙ вариант для показа клиенту.
+# Заказы на бесплатном плане не сохраняются после перезапуска. Для боевой работы:
+#   1) поставьте plan: starter
+#   2) раскомментируйте блок disk ниже
+services:
+  - type: web
+    name: drinkstar-demo
+    runtime: docker
+    plan: free
+    # disk:
+    #   name: orders
+    #   mountPath: /data
+    #   sizeGB: 1
+    envVars:
+      - key: STAFF_PIN
+        sync: false          # введите свой PIN в панели Render (не 1234)
+      - key: PAYMENT_PROVIDER
+        value: mock          # демо-оплата. На боевом: имя провайдера, например kaspi, или none
+      - key: BASE_URL
+        sync: false          # адрес сайта, который выдаст Render, потом ваш домен

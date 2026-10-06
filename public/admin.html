@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru" data-title="ad.tab">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Аналитика — DrinkStar</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@500;600;700;800&family=Noto+Sans:wght@500;600;700;800&family=Noto+Serif:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--serif:'Fraunces',Georgia,serif;--sans:'Manrope',system-ui,sans-serif}
+html:not([lang="en"]){--serif:'Noto Serif',Georgia,serif;--sans:'Noto Sans',system-ui,sans-serif}
+:root{--cream:#f7efe1;--cream-2:#efe3cf;--paper:#fffaf1;--espresso:#3a2a1e;--brown:#5b4128;--caramel:#b9772f;--caramel-2:#d9a05b;--muted:#8a7560;--line:#e3d3ba;--green:#40691f}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:var(--sans);background:var(--cream);color:var(--espresso);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+.top{display:flex;align-items:center;gap:12px;padding:14px max(22px,env(safe-area-inset-right)) 14px max(22px,env(safe-area-inset-left));padding-top:max(14px,env(safe-area-inset-top));background:var(--espresso);color:var(--cream);flex-wrap:wrap;position:sticky;top:0;z-index:5}
+.top h1{font-family:var(--serif);font-size:1.3rem;margin-right:auto}
+.top select,.top button,.top a.go{font:inherit;font-weight:700;font-size:16px;padding:9px 14px;border-radius:10px;border:none;cursor:pointer;background:#4a3524;color:var(--cream);text-decoration:none;min-height:42px;display:inline-flex;align-items:center}
+.top select{-webkit-appearance:none;appearance:none;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--cream) 50%),linear-gradient(135deg,var(--cream) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.top a.go{background:var(--caramel-2);color:var(--espresso)}
+.lang{display:inline-flex;border:1.5px solid #6a523c;border-radius:999px;overflow:hidden}
+.top .lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.75rem;padding:8px 11px;color:#cdb99d;cursor:pointer;min-height:0;border-radius:0}
+.top .lang button.on{background:var(--cream);color:var(--espresso)}
+main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-right)) 22px max(22px,env(safe-area-inset-left))}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.kpi{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px}
+.kpi span{font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi b{display:block;font-family:var(--serif);font-size:1.9rem;margin-top:4px;line-height:1.1}
+.kpi small{color:var(--muted);font-size:.78rem;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px}
+.card h2{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--caramel);margin-bottom:14px}
+.card.wide{grid-column:1/-1}
+.bars{display:flex;align-items:flex-end;gap:3px;height:140px}
+.bars div{flex:1;background:var(--caramel-2);border-radius:4px 4px 0 0;min-height:2px;position:relative}
+.bars div:hover{background:var(--caramel)}
+.bars div:hover::after{content:attr(data-t);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--espresso);color:var(--cream);font-size:.7rem;font-weight:700;padding:3px 7px;border-radius:6px;white-space:nowrap;margin-bottom:4px;z-index:2}
+.axis{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:6px;font-weight:600}
+.list .r{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.9rem;font-weight:600}
+.list .r:last-child{border:0}
+.list .r i{font-style:normal;color:var(--muted);font-weight:500;text-align:right}
+.meter{height:10px;background:var(--cream-2);border-radius:99px;overflow:hidden;margin-top:6px}
+.meter div{height:100%;background:var(--caramel)}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;grid-template-columns:minmax(0,1fr);padding:20px}
+.login form{background:var(--paper);padding:34px;border-radius:24px;border:1px solid var(--line);display:grid;gap:14px;width:min(340px,92vw);text-align:center;margin:0 auto}
+.login .lang{justify-self:center;border-color:var(--line)}
+.login .lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.75rem;padding:8px 11px;color:var(--muted);cursor:pointer}
+.login .lang button.on{background:var(--espresso);color:var(--cream)}
+.login h1{font-family:var(--serif)}
+.login input{font-size:1.4rem;text-align:center;letter-spacing:.4em;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--cream);font-family:inherit;width:100%}
+.login button.go{padding:14px;border-radius:12px;border:none;background:var(--espresso);color:var(--cream);font-weight:800;font-family:inherit;font-size:1rem;cursor:pointer;min-height:48px}
+.login p{color:#9a4a22;font-size:.85rem;min-height:1.2em;font-weight:600}
+.empty{color:var(--muted);font-size:.9rem}
+@media(max-width:800px){.grid{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="login" id="login">
+  <form id="loginForm">
+    <div class="lang"></div>
+    <h1>★ DrinkStar<br><span data-i18n="ad.login">Аналитика</span></h1>
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off" autofocus>
+    <p id="loginErr"></p>
+    <button class="go" data-i18n="st.enter">Войти</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="top">
+    <h1 data-i18n="ad.title">★ Аналитика</h1>
+    <div class="lang"></div>
+    <select id="days" aria-label="Period"><option value="1" data-i18n="ad.p1">Сегодня</option><option value="7" selected data-i18n="ad.p7">7 дней</option><option value="30" data-i18n="ad.p30">30 дней</option><option value="90" data-i18n="ad.p90">90 дней</option></select>
+    <select id="loc" aria-label="Location"></select>
+    <a class="go" id="csv" href="#" data-i18n="ad.csv">Скачать CSV</a>
+    <button id="out" type="button" data-i18n="st.logout">Выйти</button>
+  </div>
+  <main id="main"></main>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ /g, ' ') + ' ₸';
+const num = n => n.toLocaleString('ru-RU').replace(/ /g, ' ');
+let pin = sessionStorage.getItem('ds_apin') || '';
+let LOCS = {}, ITEMS = {};
+const H = () => ({ 'x-admin-pin': pin });
+const itemLabel = i => (ITEMS[i.id] ? tr(ITEMS[i.id], 'name') + (i.variant ? ' ' + I18N.num(i.variant) : '') : i.name);
+
+async function load() {
+  const q = `days=${$('#days').value}&loc=${$('#loc').value}`;
+  const r = await fetch('/api/admin/stats?' + q, { headers: H() });
+  if (r.status === 401 || r.status === 429) return logout();
+  render(await r.json());
+}
+function bars(arr, key, label) {
+  const max = Math.max(1, ...arr.map(a => a[key]));
+  return `<div class="bars">${arr.map(a => `<div style="height:${Math.max(2, a[key] / max * 100)}%" data-t="${esc(label(a))}"></div>`).join('')}</div>`;
+}
+function render(s) {
+  const tt = s.totals, c = s.club;
+  const total = tt.online + tt.cash || 1;
+  const topMax = Math.max(1, ...s.topItems.map(i => i.qty));
+  $('#main').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><span>${t('ad.revenue')}</span><b>${fmt(tt.revenue)}</b><small>${t('ad.revenue.s')}</small></div>
+    <div class="kpi"><span>${t('ad.orders')}</span><b>${num(tt.orders)}</b><small>${t('ad.orders.s')}</small></div>
+    <div class="kpi"><span>${t('ad.avg')}</span><b>${fmt(tt.avgCheck)}</b></div>
+    <div class="kpi"><span>${t('ad.money')}</span><b>${fmt(tt.money)}</b><small>${t('ad.money.s', { n: fmt(tt.bonusSpent) })}</small></div>
+    <div class="kpi"><span>${t('ad.clubshare')}</span><b>${tt.orders ? Math.round(tt.members / tt.orders * 100) : 0}%</b><small>${t('ad.clubshare.s', { a: num(tt.members), b: num(tt.orders) })}</small></div>
+    <div class="kpi"><span>${t('ad.members')}</span><b>${num(c.totalMembers)}</b><small>${t('ad.members.s', { a: num(c.newMembers), b: num(c.repeatMembers) })}</small></div>
+    <div class="kpi"><span>${t('ad.bonus')}</span><b>${num(c.bonusOutstanding)}</b><small>${t('ad.bonus.s', { n: num(tt.cashbackAccrued) })}</small></div>
+  </div>
+  ${!tt.orders ? `<p class="empty" style="margin-top:20px">${t('ad.none')}</p>` : `
+  <div class="grid">
+    <div class="card wide"><h2>${t('ad.byday')}</h2>${bars(s.byDay, 'revenue', d => `${d.date}: ${fmt(d.revenue)}, ${d.orders} ${t('ad.ord')}`)}
+      <div class="axis"><span>${s.byDay[0].date}</span><span>${s.byDay[s.byDay.length - 1].date}</span></div></div>
+    <div class="card"><h2>${t('ad.byhour')}</h2>${bars(s.byHour, 'orders', h => `${s.byHour.indexOf(h)}:00, ${h.orders} ${t('ad.ord')}`)}
+      <div class="axis"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div></div>
+    <div class="card"><h2>${t('ad.paytype')}</h2>
+      <div class="list"><div class="r"><span>${t('ad.online')}</span><i>${num(tt.online)} · ${Math.round(tt.online / total * 100)}%</i></div><div class="meter"><div style="width:${tt.online / total * 100}%"></div></div>
+      <div class="r" style="margin-top:8px"><span>${t('ad.cash')}</span><i>${num(tt.cash)} · ${Math.round(tt.cash / total * 100)}%</i></div><div class="meter"><div style="width:${tt.cash / total * 100}%"></div></div></div></div>
+    <div class="card"><h2>${t('ad.top')}</h2><div class="list">${s.topItems.map(i => `<div><div class="r"><span>${esc(itemLabel(i))}</span><i>${num(i.qty)} ${t('ad.pcs')} · ${fmt(i.revenue)}</i></div><div class="meter"><div style="width:${i.qty / topMax * 100}%"></div></div></div>`).join('')}</div></div>
+    <div class="card"><h2>${t('ad.byloc')}</h2><div class="list">${s.byLocation.map(l => `<div class="r"><span>${esc(LOCS[l.id] ? tr(LOCS[l.id], 'address') : l.address)}</span><i>${num(l.orders)} ${t('ad.ord')} · ${fmt(l.revenue)}</i></div>`).join('')}</div></div>
+  </div>`}`;
+}
+function logout() { sessionStorage.removeItem('ds_apin'); pin = ''; $('#app').hidden = true; $('#login').hidden = false; }
+async function start() {
+  const [locs, menu] = await Promise.all([fetch('/api/locations').then(r => r.json()), fetch('/api/menu').then(r => r.json())]);
+  locs.forEach(l => LOCS[l.id] = l);
+  menu.categories.forEach(c => c.items.forEach(i => ITEMS[i.id] = i));
+  $('#loc').innerHTML = `<option value="">${t('ad.allloc')}</option>` + locs.map(l => `<option value="${l.id}">${esc(tr(l, 'address'))}</option>`).join('');
+  $('#login').hidden = true; $('#app').hidden = false;
+  await load();
+}
+$('#days').onchange = $('#loc').onchange = load;
+$('#out').onclick = logout;
+$('#csv').onclick = async e => {
+  e.preventDefault();
+  const r = await fetch('/api/admin/orders.csv?days=' + $('#days').value, { headers: H() });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'drinkstar-orders.csv'; document.body.appendChild(a); a.click(); a.remove();
+};
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault(); pin = $('#pin').value;
+  const r = await fetch('/api/admin/stats?days=1', { headers: H() });
+  if (r.ok) { sessionStorage.setItem('ds_apin', pin); start(); }
+  else { $('#loginErr').textContent = r.status === 429 ? t('ad.toomany') : t('st.badpin'); $('#pin').value = ''; }
+};
+if (pin) fetch('/api/admin/stats?days=1', { headers: H() }).then(r => r.ok ? start() : logout());
+</script>
+</body>
+</html>

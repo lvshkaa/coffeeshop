@@ -1,0 +1,600 @@
+{
+  "categories": [
+    {
+      "id": "fall",
+      "name": "Fall in DrinkStar",
+      "items": [
+        {
+          "id": "fall-apple",
+          "name": "Apple Pie",
+          "desc": "яблоко · карамель · корица",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1590
+            }
+          ],
+          "photo": {
+            "src": "img/fall-apple.jpg"
+          },
+          "desc_kk": "алма · карамель · даршын",
+          "desc_en": "apple · caramel · cinnamon"
+        },
+        {
+          "id": "fall-pumpkin",
+          "name": "Pumpkin Spice",
+          "desc": "тыква · пряности · корица",
+          "star": true,
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1590
+            }
+          ],
+          "photo": {
+            "src": "img/fall-pumpkin.jpg"
+          },
+          "desc_kk": "асқабақ · дәмдеуіштер · даршын",
+          "desc_en": "pumpkin · spices · cinnamon"
+        },
+        {
+          "id": "fall-maple",
+          "name": "Maple Pecan",
+          "desc": "клён · орех · кофе",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1590
+            }
+          ],
+          "photo": {
+            "src": "img/fall-maple.jpg"
+          },
+          "desc_kk": "үйеңкі · жаңғақ · кофе",
+          "desc_en": "maple · pecan · coffee"
+        }
+      ]
+    },
+    {
+      "id": "coffee",
+      "name": "Кофе",
+      "items": [
+        {
+          "id": "espresso",
+          "name": "Эспрессо / Лунго",
+          "variants": [
+            {
+              "label": "0,3",
+              "price": 700
+            }
+          ],
+          "name_en": "Espresso / Lungo"
+        },
+        {
+          "id": "americano",
+          "name": "Американо",
+          "variants": [
+            {
+              "label": "0,3",
+              "price": 890
+            },
+            {
+              "label": "0,4",
+              "price": 1090
+            }
+          ],
+          "name_en": "Americano"
+        },
+        {
+          "id": "cappuccino",
+          "name": "Капучино",
+          "variants": [
+            {
+              "label": "0,3",
+              "price": 1150
+            },
+            {
+              "label": "0,4",
+              "price": 1190
+            }
+          ],
+          "name_en": "Cappuccino"
+        },
+        {
+          "id": "latte",
+          "name": "Латте",
+          "variants": [
+            {
+              "label": "0,3",
+              "price": 1150
+            },
+            {
+              "label": "0,4",
+              "price": 1190
+            }
+          ],
+          "name_en": "Latte"
+        },
+        {
+          "id": "flatwhite",
+          "name": "Флэт Уайт",
+          "variants": [
+            {
+              "label": "0,3",
+              "price": 1190
+            }
+          ],
+          "name_en": "Flat White"
+        },
+        {
+          "id": "raf",
+          "name": "Раф",
+          "variants": [
+            {
+              "label": "0,3",
+              "price": 1250
+            },
+            {
+              "label": "0,4",
+              "price": 1350
+            }
+          ],
+          "name_en": "Raf"
+        }
+      ],
+      "name_kk": "Кофе",
+      "name_en": "Coffee"
+    },
+    {
+      "id": "iced",
+      "name": "Холодный кофе",
+      "items": [
+        {
+          "id": "iceamericano",
+          "name": "Айс Американо",
+          "variants": [
+            {
+              "label": "",
+              "price": 1090
+            }
+          ],
+          "name_en": "Iced Americano"
+        },
+        {
+          "id": "icelatte",
+          "name": "Айс Латте",
+          "variants": [
+            {
+              "label": "",
+              "price": 1190
+            }
+          ],
+          "name_en": "Iced Latte"
+        },
+        {
+          "id": "bumble-orange",
+          "name": "Бамбл Апельсин",
+          "desc": "эспрессо · апельсин",
+          "variants": [
+            {
+              "label": "",
+              "price": 1490
+            }
+          ],
+          "name_en": "Orange Bumble",
+          "desc_kk": "эспрессо · апельсин",
+          "desc_en": "espresso · orange"
+        },
+        {
+          "id": "bumble-cherry",
+          "name": "Бамбл Вишня",
+          "desc": "эспрессо · вишня",
+          "variants": [
+            {
+              "label": "",
+              "price": 1490
+            }
+          ],
+          "name_kk": "Бамбл Шие",
+          "name_en": "Cherry Bumble",
+          "desc_kk": "эспрессо · шие",
+          "desc_en": "espresso · cherry"
+        },
+        {
+          "id": "espresso-tonic",
+          "name": "Эспрессо-тоник",
+          "desc": "эспрессо · тоник · цитрус",
+          "variants": [
+            {
+              "label": "",
+              "price": 1590
+            }
+          ],
+          "name_en": "Espresso Tonic",
+          "desc_kk": "эспрессо · тоник · цитрус",
+          "desc_en": "espresso · tonic · citrus"
+        }
+      ],
+      "name_kk": "Суық кофе",
+      "name_en": "Iced coffee"
+    },
+    {
+      "id": "signature",
+      "name": "Фирменный кофе",
+      "note": "0,4 л",
+      "items": [
+        {
+          "id": "salted-caramel",
+          "name": "Salted Caramel",
+          "desc": "солёная карамель · кофе со сливками",
+          "star": true,
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1490
+            }
+          ],
+          "desc_kk": "тұзды карамель · кілегейлі кофе",
+          "desc_en": "salted caramel · coffee with cream"
+        },
+        {
+          "id": "tiramisu",
+          "name": "Tiramisu",
+          "desc": "белый шоколад · ваниль · какао",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1490
+            }
+          ],
+          "desc_kk": "ақ шоколад · ваниль · какао",
+          "desc_en": "white chocolate · vanilla · cocoa"
+        },
+        {
+          "id": "coconut-white",
+          "name": "Coconut White",
+          "desc": "кокос · белый шоколад · кофе",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1490
+            }
+          ],
+          "desc_kk": "кокос · ақ шоколад · кофе",
+          "desc_en": "coconut · white chocolate · coffee"
+        },
+        {
+          "id": "shake-vanilla",
+          "name": "Milkshake Ваниль",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1800
+            }
+          ],
+          "name_kk": "Milkshake Ваниль",
+          "name_en": "Vanilla Milkshake"
+        },
+        {
+          "id": "shake-strawberry",
+          "name": "Milkshake Клубника",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1800
+            }
+          ],
+          "name_kk": "Milkshake Құлпынай",
+          "name_en": "Strawberry Milkshake"
+        },
+        {
+          "id": "shake-chocolate",
+          "name": "Milkshake Шоколад",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1800
+            }
+          ],
+          "name_kk": "Milkshake Шоколад",
+          "name_en": "Chocolate Milkshake"
+        }
+      ],
+      "name_kk": "Фирмалық кофе",
+      "name_en": "Signature coffee",
+      "note_kk": "0,4 л",
+      "note_en": "0.4 l"
+    },
+    {
+      "id": "tea",
+      "name": "Чай",
+      "note": "0,4 л",
+      "items": [
+        {
+          "id": "tea-black",
+          "name": "Чёрный чай",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 700
+            }
+          ],
+          "name_kk": "Қара шай",
+          "name_en": "Black tea"
+        },
+        {
+          "id": "tea-green",
+          "name": "Зелёный чай",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 700
+            }
+          ],
+          "name_kk": "Жасыл шай",
+          "name_en": "Green tea"
+        },
+        {
+          "id": "tea-raspberry",
+          "name": "Малина × Мята",
+          "desc": "ягодный",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "name_kk": "Таңқурай × Жалбыз",
+          "name_en": "Raspberry × Mint",
+          "desc_kk": "жидекті",
+          "desc_en": "berry"
+        },
+        {
+          "id": "tea-seabuckthorn",
+          "name": "Облепиха × Апельсин",
+          "desc": "цитрусовый",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "name_en": "Sea buckthorn × Orange",
+          "desc_kk": "цитрусты",
+          "desc_en": "citrus"
+        },
+        {
+          "id": "tea-ginger",
+          "name": "Имбирь × Лимон",
+          "desc": "согревающий",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "name_en": "Ginger × Lemon",
+          "desc_kk": "жылытатын",
+          "desc_en": "warming"
+        },
+        {
+          "id": "tea-tashkent",
+          "name": "Ташкентский",
+          "desc": "цитрус · мята",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "name_kk": "Ташкенттік",
+          "name_en": "Tashkent",
+          "desc_kk": "цитрус · жалбыз",
+          "desc_en": "citrus · mint"
+        },
+        {
+          "id": "tea-apple",
+          "name": "Яблоко × Корица",
+          "desc": "пряный",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "name_kk": "Алма × Даршын",
+          "name_en": "Apple × Cinnamon",
+          "desc_kk": "дәмдеуішті",
+          "desc_en": "spiced"
+        },
+        {
+          "id": "tea-cherry",
+          "name": "Вишня × Гибискус",
+          "desc": "кисло-сладкий",
+          "star": true,
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "name_kk": "Шие × Гибискус",
+          "name_en": "Cherry × Hibiscus",
+          "desc_kk": "қышқыл-тәтті",
+          "desc_en": "sweet & sour"
+        }
+      ],
+      "name_kk": "Шай",
+      "name_en": "Tea",
+      "note_kk": "0,4 л",
+      "note_en": "0.4 l"
+    },
+    {
+      "id": "lemonade",
+      "name": "Лимонады",
+      "note": "0,4 л",
+      "items": [
+        {
+          "id": "mango-yuzu",
+          "name": "Mango Yuzu",
+          "desc": "манго · юзу · цитрус",
+          "star": true,
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "desc_kk": "манго · юзу · цитрус",
+          "desc_en": "mango · yuzu · citrus"
+        },
+        {
+          "id": "cherry-cola",
+          "name": "Cherry Cola",
+          "desc": "вишня · кола · лайм",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "desc_kk": "шие · кола · лайм",
+          "desc_en": "cherry · cola · lime"
+        },
+        {
+          "id": "peach-jasmine",
+          "name": "Peach Jasmine",
+          "desc": "персик · жасмин · лимон",
+          "variants": [
+            {
+              "label": "0,4",
+              "price": 1200
+            }
+          ],
+          "desc_kk": "шабдалы · жасмин · лимон",
+          "desc_en": "peach · jasmine · lemon"
+        }
+      ],
+      "name_kk": "Лимонадтар",
+      "name_en": "Lemonades",
+      "note_kk": "0,4 л",
+      "note_en": "0.4 l"
+    },
+    {
+      "id": "noncoffee",
+      "name": "Не кофе",
+      "items": [
+        {
+          "id": "cocoa",
+          "name": "Какао",
+          "variants": [
+            {
+              "label": "",
+              "price": 990
+            }
+          ],
+          "name_en": "Cocoa"
+        },
+        {
+          "id": "hot-chocolate",
+          "name": "Горячий шоколад",
+          "variants": [
+            {
+              "label": "",
+              "price": 1100
+            }
+          ],
+          "name_kk": "Ыстық шоколад",
+          "name_en": "Hot chocolate"
+        },
+        {
+          "id": "matcha-latte",
+          "name": "Матча Латте",
+          "variants": [
+            {
+              "label": "",
+              "price": 1190
+            }
+          ],
+          "name_en": "Matcha Latte"
+        }
+      ],
+      "name_kk": "Кофе емес",
+      "name_en": "Non-coffee"
+    },
+    {
+      "id": "food",
+      "name": "Еда и выпечка",
+      "name_kk": "Тағам және пісірмелер",
+      "name_en": "Food & pastries",
+      "items": [
+        {
+          "id": "donuts",
+          "name": "Пончики",
+          "name_kk": "Пончиктер",
+          "name_en": "Donuts",
+          "variants": [
+            {
+              "label": "",
+              "price": null
+            }
+          ]
+        },
+        {
+          "id": "panini",
+          "name": "Панини",
+          "name_kk": "Панини",
+          "name_en": "Panini",
+          "variants": [
+            {
+              "label": "",
+              "price": null
+            }
+          ]
+        },
+        {
+          "id": "croissants",
+          "name": "Круассаны",
+          "name_kk": "Круассандар",
+          "name_en": "Croissants",
+          "variants": [
+            {
+              "label": "",
+              "price": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "addons": [
+    {
+      "id": "syrup",
+      "name": "Сироп",
+      "price": 100,
+      "name_kk": "Сироп",
+      "name_en": "Syrup"
+    },
+    {
+      "id": "shot",
+      "name": "Доп. эспрессо",
+      "price": 200,
+      "name_kk": "Қосымша эспрессо",
+      "name_en": "Extra espresso"
+    },
+    {
+      "id": "altmilk",
+      "name": "Альтернативное молоко",
+      "price": 400,
+      "name_kk": "Балама сүт",
+      "name_en": "Plant-based milk"
+    },
+    {
+      "id": "decaf",
+      "name": "Декаф",
+      "price": 400,
+      "name_kk": "Декаф",
+      "name_en": "Decaf"
+    }
+  ]
+}

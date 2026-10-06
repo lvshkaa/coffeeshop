@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DrinkStar</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Serif:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--serif:'Fraunces',Georgia,serif;--sans:'Manrope',system-ui,sans-serif}
+html:not([lang="en"]){--serif:'Noto Serif',Georgia,serif;--sans:'Noto Sans',system-ui,sans-serif}
+:root{--cream:#f7efe1;--paper:#fffaf1;--espresso:#3a2a1e;--brown:#5b4128;--caramel:#b9772f;--muted:#8a7560;--line:#e3d3ba}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--cream);color:var(--espresso);line-height:1.65;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:820px;margin:0 auto;padding:18px 20px}
+.brand{font-family:var(--serif);font-weight:700;font-size:1.2rem;color:var(--espresso);text-decoration:none}
+.lang{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--paper)}
+.lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.72rem;padding:8px 11px;color:var(--muted);cursor:pointer}
+.lang button.on{background:var(--espresso);color:var(--cream)}
+main{max-width:820px;margin:0 auto;padding:10px 20px 70px}
+h1{font-family:var(--serif);font-size:clamp(1.7rem,5vw,2.4rem);line-height:1.15;margin:10px 0 6px}
+.ver{color:var(--muted);font-size:.85rem;margin-bottom:22px}
+h2{font-family:var(--serif);font-size:1.15rem;margin:28px 0 8px}
+p{margin-bottom:10px;color:#4a3a2c}
+mark.ph{background:#ffe9b5;color:#7a4a00;border-radius:4px;padding:0 4px;font-weight:600}
+.draft{background:#fff3d6;border:1px solid #e8c777;color:#7a4a00;border-radius:14px;padding:14px 16px;font-size:.9rem;font-weight:600;margin:10px 0 18px}
+.nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:.9rem;font-weight:600}
+.nav a{color:var(--caramel);text-decoration:none}.nav a.cur{color:var(--espresso);pointer-events:none}
+</style>
+</head>
+<body>
+<div class="bar"><a class="brand" href="/">★ DrinkStar</a><div class="lang"></div></div>
+<main id="doc"></main>
+<script src="i18n.js"></script>
+<script src="legal.js"></script>
+<script>
+const { LANG } = window.I18N;
+const params = new URLSearchParams(location.search);
+const kind = ['privacy', 'terms', 'club'].includes(params.get('doc')) ? params.get('doc') : 'privacy';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PH = {
+  ru: { company: 'название ТОО/ИП', bin: 'БИН/ИИН', address: 'адрес', phone: 'телефон', email: 'e-mail', storage: 'место хранения: сервер на территории РК' },
+  kk: { company: 'ЖШС/ЖК атауы', bin: 'БСН/ЖСН', address: 'мекенжай', phone: 'телефон', email: 'e-mail', storage: 'сақтау орны: ҚР аумағындағы сервер' },
+  en: { company: 'company name', bin: 'BIN', address: 'address', phone: 'phone', email: 'e-mail', storage: 'storage location: server in Kazakhstan' }
+}[LANG];
+const DRAFT = {
+  ru: 'Шаблон документа. Перед запуском его должен проверить юрист. Заполните данные организации в data/company.json, затем поставьте "draft": false, и это сообщение исчезнет.',
+  kk: 'Құжат үлгісі. Іске қосар алдында заңгер тексеруі тиіс. Ұйым деректерін data/company.json файлына толтырып, "draft": false қойыңыз, бұл хабарлама жоғалады.',
+  en: 'Document template. A lawyer must review it before launch. Fill in the organisation details in data/company.json, then set "draft": false and this notice will disappear.'
+}[LANG];
+const NAV = { privacy: { ru: 'Политика конфиденциальности', kk: 'Құпиялылық саясаты', en: 'Privacy Policy' }, terms: { ru: 'Публичная оферта', kk: 'Жария оферта', en: 'Public Offer' }, club: { ru: 'Правила клуба', kk: 'Клуб ережелері', en: 'Club Rules' } };
+const VERSION = { ru: 'Версия от', kk: 'Нұсқа', en: 'Version of' }[LANG];
+
+fetch('/api/config').then(r => r.json()).then(cfg => {
+  const co = cfg.company || {};
+  const vals = { company: co.name, bin: co.bin, address: co.address, phone: co.phone, email: co.email, storage: co.storage, version: co.legalVersion, p: cfg.club.cashbackPercent, m: cfg.club.maxBonusPercent };
+  const fill = str => esc(str).replace(/\{(\w+)\}/g, (m, k) => (vals[k] !== undefined && vals[k] !== '' && vals[k] !== null) ? esc(vals[k]) : (PH[k] ? `<mark class="ph">[${esc(PH[k])}]</mark>` : m));
+  const d = LEGAL[kind][LANG];
+  document.title = d.title + ' — DrinkStar';
+  document.getElementById('doc').innerHTML =
+    (co.draft ? `<div class="draft">${esc(DRAFT)}</div>` : '') +
+    `<h1>${esc(d.title)}</h1><div class="ver">${VERSION} ${esc(co.legalVersion || '')}</div>` +
+    d.sections.map(([h, ps], i) => `<h2>${i + 1}. ${esc(h)}</h2>${ps.map(p => `<p>${fill(p)}</p>`).join('')}`).join('') +
+    `<div class="nav">${['privacy', 'terms', 'club'].map(k => `<a class="${k === kind ? 'cur' : ''}" href="legal.html?doc=${k}">${NAV[k][LANG]}</a>`).join('')}<a href="/">← DrinkStar</a></div>`;
+});
+</script>
+</body>
+</html>

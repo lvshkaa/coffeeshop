@@ -1,0 +1,7 @@
+{
+  "name": "DrinkStar Club",
+  "cashbackPercent": 5,
+  "maxBonusPercent": 50,
+  "freeSyrup": true,
+  "syrupAddonId": "syrup"
+}

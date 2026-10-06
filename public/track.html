@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru" data-title="tr.title">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мой заказ — DrinkStar</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700;800&family=Noto+Serif:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--serif:'Fraunces',Georgia,serif;--sans:'Manrope',system-ui,sans-serif}
+/* ru и kk: весь кириллический текст одним семейством Noto, где есть казахские буквы ә ғ қ ң ө ұ ү һ і */
+html:not([lang="en"]){--serif:'Noto Serif',Georgia,serif;--sans:'Noto Sans',system-ui,sans-serif}
+
+:root{--cream:#f7efe1;--cream-2:#efe3cf;--paper:#fffaf1;--espresso:#3a2a1e;--brown:#5b4128;--caramel:#b9772f;--caramel-2:#d9a05b;--muted:#8a7560;--line:#e3d3ba}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:radial-gradient(800px 500px at 80% 0,#f0d9b0,transparent 60%),var(--cream);color:var(--espresso);min-height:100vh;display:grid;place-items:center;grid-template-columns:minmax(0,1fr);padding:24px;-webkit-font-smoothing:antialiased}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:28px;padding:36px 32px;width:min(480px,100%);box-shadow:0 20px 60px rgba(91,65,40,.12);text-align:center}
+.brand{font-family:var(--serif);font-weight:700;font-size:1.2rem;margin-bottom:22px;display:block;color:var(--espresso);text-decoration:none}
+.eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--caramel);font-weight:700}
+.num{font-family:var(--serif);font-size:4.5rem;font-weight:700;line-height:1;margin:6px 0 4px}
+.where{color:var(--muted);font-size:.9rem}
+.status{margin:26px 0 6px;font-family:var(--serif);font-size:1.6rem;font-weight:700}
+.hint{color:var(--brown);font-size:.92rem;min-height:2.6em}
+.steps{display:flex;justify-content:space-between;margin:26px 0 8px;position:relative}
+.steps::before{content:"";position:absolute;left:8%;right:8%;top:15px;height:3px;background:var(--line)}
+.step{position:relative;flex:1;font-size:.72rem;font-weight:600;color:var(--muted)}
+.dot{width:32px;height:32px;border-radius:50%;background:var(--paper);border:3px solid var(--line);margin:0 auto 8px;display:grid;place-items:center;font-size:.8rem;transition:.4s;position:relative}
+.step.done .dot{background:var(--caramel);border-color:var(--caramel);color:#fff}
+.step.now .dot{border-color:var(--caramel);box-shadow:0 0 0 6px rgba(185,119,47,.18);animation:pulse 1.6s infinite}
+.step.done,.step.now{color:var(--espresso)}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(185,119,47,.05)}}
+.list{margin-top:26px;text-align:left;border-top:1px dashed var(--line);padding-top:16px;font-size:.92rem}
+.row{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+.row small{display:block;color:var(--muted)}
+.sum{font-family:var(--serif);font-weight:700;font-size:1.2rem;border-top:1px dashed var(--line);margin-top:8px;padding-top:12px}
+.ready{background:#e3efd6;color:#40691f;border-radius:16px;padding:14px;font-weight:700;margin-top:18px}
+.back{display:inline-block;margin-top:24px;font-weight:700;color:var(--caramel);text-decoration:none;font-size:.9rem}
+.paybtn{display:block;margin-top:20px;background:var(--espresso);color:var(--cream);padding:15px;border-radius:999px;font-weight:800;text-decoration:none}
+.paidtag{margin-top:14px;font-size:.8rem;font-weight:700;color:#40691f}.paidtag.cash{color:var(--muted)}
+.bonus-tag{margin-top:12px;background:#fff3df;color:#8a5a14;border-radius:12px;padding:10px 12px;font-size:.85rem;font-weight:700;text-align:center}
+.lang{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--paper);margin-bottom:18px}
+.lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.72rem;padding:7px 10px;color:var(--muted);cursor:pointer}
+.lang button.on{background:var(--espresso);color:var(--cream)}
+</style>
+</head>
+<body>
+<div class="card" id="card"><div class="lang"></div><a class="brand" href="/">★ DrinkStar</a><div id="out" data-i18n="tr.loading">Загружаем…</div></div>
+<script src="i18n.js"></script>
+<script>
+const { LANG, LOCALE } = window.I18N;
+const token = new URLSearchParams(location.search).get('t');
+const fmt = n => n.toLocaleString('ru-RU').replace(/ /g, ' ') + ' ₸';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const STEPS = ['new', 'preparing', 'ready', 'done'];
+let prev, timer, MENU_ITEMS = {}, ADDONS = {};
+const out = document.getElementById('out');
+
+function render(o) {
+  const idx = STEPS.indexOf(o.status);
+  const steps = STEPS.map((s, i) => `<div class="step ${i < idx || o.status === 'done' ? 'done' : i === idx ? 'now' : ''}"><div class="dot">${i < idx || o.status === 'done' ? '✓' : i + 1}</div>${t('tr.s' + (i + 1))}</div>`).join('');
+  const lines = o.items.map(i => {
+    const name = MENU_ITEMS[i.id] ? tr(MENU_ITEMS[i.id], 'name') : i.name;
+    const adds = (i.addonIds || []).map(id => ADDONS[id] ? tr(ADDONS[id], 'name') : id);
+    return `<div class="row"><span>${i.qty} × ${esc(name)} ${esc(I18N.num(i.variant))}${adds.length ? `<small>${adds.map(esc).join(', ')}</small>` : ''}</span><span>${fmt(i.unit * i.qty)}</span></div>`;
+  }).join('');
+  const open = o.status !== 'cancelled' && o.status !== 'awaiting_payment';
+  out.innerHTML = `
+    <div class="eyebrow">${t('tr.order')}</div><div class="num">№${o.number}</div><div class="where">${esc(o.location || '')}</div>
+    <div class="status">${t('tr.t.' + o.status)}</div><div class="hint">${t('tr.h.' + o.status)}</div>
+    ${open ? `<div class="steps">${steps}</div>` : ''}
+    ${o.status === 'awaiting_payment' && o.payUrl ? `<a class="paybtn" href="${esc(o.payUrl)}">${t('tr.pay', { sum: fmt(o.payable) })}</a>` : ''}
+    ${o.paid ? `<div class="paidtag">${t('tr.paidonline')}</div>` : (open && o.status !== 'done' ? `<div class="paidtag cash">${t('tr.paycash')}</div>` : '')}
+    ${o.status === 'ready' ? `<div class="ready">${t('tr.say', { n: o.number })}</div>` : ''}
+    <div class="list">${lines}
+      ${o.bonusUsed ? `<div class="row"><span>${t('cart.sum')}</span><span>${fmt(o.total)}</span></div><div class="row" style="color:#40691f"><span>${t('tr.bonuspaid')}</span><span>−${fmt(o.bonusUsed)}</span></div>` : ''}
+      <div class="row sum"><span>${o.bonusUsed ? t('cart.topay') : t('cart.total')}</span><span>${fmt(o.payable)}</span></div>
+      ${o.cashbackDone ? `<div class="bonus-tag">${t('tr.bonusdone')}</div>` : (o.member && o.cashback ? `<div class="bonus-tag">${t('tr.bonussoon', { n: o.cashback })}</div>` : '')}
+    </div>
+    <a class="back" href="/">${t('tr.home')}</a>`;
+  if (prev && prev !== 'ready' && o.status === 'ready') { navigator.vibrate?.([200, 100, 200]); document.title = t('tr.ready.title'); }
+  prev = o.status;
+  if (o.status === 'done' || o.status === 'cancelled') clearInterval(timer);
+}
+async function load() {
+  try {
+    const r = await fetch('/api/orders/' + token, { headers: { 'x-lang': LANG } });
+    if (!r.ok) throw 0;
+    render(await r.json());
+  } catch { out.innerHTML = `${t('tr.notfound')}<br><a class="back" href="/">${t('tr.home')}</a>`; clearInterval(timer); }
+}
+(async function start() {
+  if (!token) { out.innerHTML = `${t('tr.nonumber')}<br><a class="back" href="/">${t('tr.home')}</a>`; return; }
+  try {
+    const m = await fetch('/api/menu').then(r => r.json());
+    m.categories.forEach(c => c.items.forEach(i => MENU_ITEMS[i.id] = i));
+    m.addons.forEach(a => ADDONS[a.id] = a);
+  } catch { /* покажем названия, сохранённые в заказе */ }
+  load(); timer = setInterval(load, 4000);
+})();
+</script>
+</body>
+</html>
