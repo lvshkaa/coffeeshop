@@ -14,8 +14,12 @@ services:
     #   sizeGB: 1
     envVars:
       - key: STAFF_PIN
-        sync: false          # введите свой PIN в панели Render (не 1234)
+        sync: false          # введите свой PIN для бариста в панели Render (не 1234)
+      - key: ADMIN_PIN
+        sync: false          # введите свой PIN для владельца (не 0000 и не такой же, как STAFF_PIN)
       - key: PAYMENT_PROVIDER
         value: mock          # демо-оплата. На боевом: имя провайдера, например kaspi, или none
+      - key: SMS_PROVIDER
+        value: demo          # демо: код входа показывается на странице. На боевом: имя провайдера
       - key: BASE_URL
-        sync: false          # адрес сайта, который выдаст Render, потом ваш домен
+        sync: false          # адрес сайта, который выдаст Render, потом ваш домен (можно оставить пустым)
