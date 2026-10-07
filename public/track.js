@@ -10,9 +10,9 @@ let repeatTimer = null, pickedRating = 0, tokenGlobal = token;
 
 // когда заказ готов: сигнал, голос, вибрация; сигнал повторяется до трёх раз, пока клиент не коснётся экрана
 // Для языков из CLIP_LANGS есть записанная фраза (public/audio/ready-<язык>.mp3). Для остальных: сигнал и голос браузера.
-// записанные фразы: ready-<язык>.mp3. Пока нет казахской, для неё играет русская (человечнее синтеза)
+// записанные фразы: ready-<язык>.mp3 для каждого языка
 const CLIP_LANGS = ['ru', 'kk', 'en'];
-const CLIP_FILE = { ru: 'ru', kk: 'ru', en: 'en' };
+const CLIP_FILE = { ru: 'ru', kk: 'kk', en: 'en' };
 const CLIP = 'ready-' + CLIP_FILE[LANG];
 if (CLIP_LANGS.includes(LANG)) DSSound.preload(CLIP, '/audio/' + CLIP + '.mp3');
 function playReady(o) {
