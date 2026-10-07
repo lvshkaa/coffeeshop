@@ -127,3 +127,22 @@ describe('аналитика владельца', () => {
     assert.equal(s.status, 200); assert.ok(s.json.totals.orders >= 1);
   });
 });
+
+describe('меню владельца', () => {
+  test('владелец добавляет и удаляет свою позицию, CSV отдаётся как текст', async () => {
+    const s = await startServer();
+    try {
+      const A = await adminHeaders(s.call);
+      const add = await s.call('POST', '/api/admin/menu/items', { category: 'coffee', name: 'Тест-латте', variants: [{ label: '0,3', price: 999 }] }, A);
+      assert.equal(add.status, 201);
+      const menu = await s.call('GET', '/api/menu');
+      assert.ok(menu.json.categories.find(c => c.id === 'coffee').items.some(i => i.id === add.json.id && i.variants[0].price === 999));
+      const del = await s.call('DELETE', '/api/admin/menu/items/' + add.json.id, undefined, A);
+      assert.equal(del.status, 200);
+      const again = await s.call('GET', '/api/menu');
+      assert.ok(!again.json.categories.find(c => c.id === 'coffee').items.some(i => i.id === add.json.id));
+      const csv = await s.call('GET', '/api/admin/orders.csv?days=1', undefined, A);
+      assert.ok(csv.text.includes("Номер;Дата"));
+    } finally { s.stop(); }
+  });
+});

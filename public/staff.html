@@ -80,6 +80,7 @@ body{font-family:var(--sans);background:var(--cream);color:var(--espresso);min-h
 .stoprow button{font:inherit;font-weight:800;border:1.5px solid var(--line,#e3d3ba);background:var(--cream,#f7efe1);color:inherit;border-radius:999px;padding:8px 16px;min-height:40px;cursor:pointer}
 .stoprow.off button{background:#f1dcd0;color:#9a3b1a;border-color:#e3b9a3}.stoprow.off span{text-decoration:line-through;opacity:.7}
 .stopbox .end{margin-top:14px}
+.stopbox{position:relative}.stopx{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:none;background:var(--cream-2,#efe3cf);color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center}.stopbox h3{padding-right:44px}
 </style>
 </head>
 <body>
@@ -113,7 +114,7 @@ body{font-family:var(--sans);background:var(--cream);color:var(--espresso);min-h
   </div>
 </div>
 
-<div class="stopdlg" id="stopDlg" hidden><div class="stopbox"><h3 data-i18n="st.stop">Стоп-лист</h3><p class="stophint" id="stopHint"></p><div id="stopList"></div><button class="end" id="stopClose" type="button" data-i18n="st.stop.close">Готово</button></div></div>
+<div class="stopdlg" id="stopDlg" hidden><div class="stopbox"><button class="stopx" id="stopX" type="button" aria-label="Close"><span data-ic="x"></span></button><h3 data-i18n="st.stop">Стоп-лист</h3><p class="stophint" id="stopHint"></p><div id="stopList"></div><button class="end" id="stopClose" type="button" data-i18n="st.stop.close">Готово</button></div></div>
 <script src="icons.js"></script>
 <script src="i18n.js"></script>
 <script src="sound.js"></script>

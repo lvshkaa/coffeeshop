@@ -175,17 +175,33 @@ async function loadMenu() {
   const r = await A('/api/admin/menu');
   if (r.status === 401 || r.status === 429) return logout();
   const cats = await r.json();
-  $('#view-menu').innerHTML = `<div class="card"><h2>${t('mn.title')}</h2><p class="empty" style="margin-bottom:10px">${t('mn.hint')}</p>${cats.map(c => `<h3 style="margin:18px 0 4px;font-family:var(--serif)">${esc(tr(c, 'name'))}</h3>${c.items.map(i => `
-    <div class="mrow" data-id="${i.id}"><div class="nm">${esc(tr(i, 'name'))}${i.hidden ? ` <small>${t('mn.hidden')}</small>` : ''}</div>
+  $('#view-menu').innerHTML = `<div class="card"><h2>${t('mn.title')}</h2><p class="empty" style="margin-bottom:10px">${t('mn.hint')}</p>
+    <form class="addform" id="addItem" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:8px">
+      <label>${t('mn.f.name')}<input name="name" required maxlength="80"></label>
+      <label>${t('mn.f.kk')}<input name="kk" maxlength="80"></label>
+      <label>${t('mn.f.en')}<input name="en" maxlength="80"></label>
+      <label>${t('mn.f.cat')}<select name="cat">${cats.map(c => `<option value="${c.id}">${esc(tr(c, 'name'))}</option>`).join('')}</select></label>
+      <label>${t('mn.f.size')}<input name="size" maxlength="20"></label>
+      <label>${t('mn.f.price')}<input name="price" type="number" min="1" step="1" required></label>
+      <button class="btn">${ic('plus')} ${t('mn.add')}</button></form><p class="loginErr" id="addErr" style="color:var(--red);font-weight:700"></p>
+    ${cats.map(c => `<h3 style="margin:18px 0 4px;font-family:var(--serif)">${esc(tr(c, 'name'))}</h3>${c.items.map(i => `
+    <div class="mrow" data-id="${i.id}"><div class="nm">${esc(tr(i, 'name'))}${i.hidden ? ` <small>${t('mn.hidden')}</small>` : ''}${i.custom ? ` <small>${t('mn.custom')}</small>` : ''}</div>
       ${i.variants.map((v, idx) => `<label style="font-size:.75rem;font-weight:700;color:var(--muted)">${esc(v.label || '')}<br><input type="number" min="1" step="1" data-v="${idx}" data-base="${v.base ?? ''}" value="${v.price ?? ''}" placeholder="${esc(tp('mn.noprice'))}" class="${v.overridden ? 'mod' : ''}"></label>`).join('')}
       <button class="btn sm" data-save>${t('mn.save')}</button>
       <button class="btn sec sm" data-reset>${t('mn.reset')}</button>
-      <button class="btn sec sm" data-hide="${i.hidden ? 0 : 1}">${i.hidden ? t('mn.show') : t('mn.hide')}</button></div>`).join('')}`).join('')}</div>`;
+      <button class="btn sec sm" data-hide="${i.hidden ? 0 : 1}">${i.hidden ? t('mn.show') : t('mn.hide')}</button>${i.custom ? `<button class="btn danger sm" data-del data-name="${esc(i.name)}">${ic('trash-2')} ${t('mn.del')}</button>` : ''}</div>`).join('')}`).join('')}</div>`;
+  $('#addItem').onsubmit = async e => {
+    e.preventDefault(); const f = e.target;
+    const r = await A('/api/admin/menu/items', { method: 'POST', body: JSON.stringify({ category: f.cat.value, name: f.name.value, name_kk: f.kk.value, name_en: f.en.value, variants: [{ label: f.size.value, price: Math.round(+f.price.value) }] }) });
+    if (r.ok) loadMenu(); else $('#addErr').textContent = (await r.json().catch(() => ({}))).error || tp('mn.err');
+  };
   document.querySelectorAll('#view-menu .mrow').forEach(row => {
     const id = row.dataset.id;
     const patch = async body => { await A('/api/admin/menu/items/' + id, { method: 'PATCH', body: JSON.stringify(body) }); loadMenu(); };
     row.querySelector('[data-save]').onclick = () => patch({ variants: [...row.querySelectorAll('input')].map(inp => inp.value === '' || +inp.value === +inp.dataset.base ? null : Math.round(+inp.value)) });
     row.querySelector('[data-reset]').onclick = () => patch({ variants: [...row.querySelectorAll('input')].map(() => null) });
+    const del = row.querySelector('[data-del]');
+    if (del) del.onclick = async () => { if (!confirm(tp('mn.delask', { n: del.dataset.name }))) return; await A('/api/admin/menu/items/' + id, { method: 'DELETE' }); loadMenu(); };
     row.querySelector('[data-hide]').onclick = e => patch({ hidden: e.currentTarget.dataset.hide === '1' });
   });
 }
@@ -229,6 +245,7 @@ $('#out').onclick = logout;
 $('#csv').onclick = async e => {
   e.preventDefault();
   const r = await A('/api/admin/orders.csv?days=' + $('#days').value);
+  if (!r.ok) return;
   const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'drinkstar-orders.csv'; document.body.appendChild(a); a.click(); a.remove();
 };
 $('#loginForm').onsubmit = async e => {

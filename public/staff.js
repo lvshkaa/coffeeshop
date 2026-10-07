@@ -170,4 +170,7 @@ async function openStop() {
   };
 }
 $('#stopBtn').onclick = openStop;
-$('#stopClose').onclick = () => { $('#stopDlg').hidden = true; };
+const closeStop = () => { $('#stopDlg').hidden = true; };
+$('#stopClose').onclick = $('#stopX').onclick = closeStop;
+$('#stopDlg').onclick = e => { if (e.target.id === 'stopDlg') closeStop(); };
+addEventListener('keydown', e => { if (e.key === 'Escape') closeStop(); });

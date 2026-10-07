@@ -120,10 +120,20 @@ const ACTIVE = ['new', 'preparing', 'ready'];
 const VALID = "status NOT IN ('cancelled','awaiting_payment')";
 
 // --- меню: базовый файл + правки владельца (цены, скрытие) + стоп-лист по кофейням ---
+// базовое меню из файла + позиции, добавленные владельцем
+function fullCategories() {
+  const cats = JSON.parse(JSON.stringify(baseMenu.categories));
+  for (const r of P('SELECT id, category, data FROM menu_custom ORDER BY created_at').all()) {
+    const c = cats.find(x => x.id === r.category);
+    if (c) c.items.push({ id: r.id, custom: true, ...JSON.parse(r.data) });
+  }
+  return cats;
+}
 function buildMenu() {
   const ov = new Map(P('SELECT item_id, variant, price FROM menu_overrides').all().map(r => [r.item_id + ':' + r.variant, r.price]));
   const hidden = new Set(P('SELECT item_id FROM item_hidden').all().map(r => r.item_id));
   const menu = JSON.parse(JSON.stringify(baseMenu));
+  menu.categories = fullCategories();
   const items = new Map();
   for (const c of menu.categories) {
     c.items = c.items.filter(i => !hidden.has(i.id));
@@ -684,7 +694,7 @@ async function api(req, res, url) {
       const body = await readBody(req);
       const loc = eff || String(body.locationId || '');
       if (!locById.has(loc)) return send(400, { error: 'Выберите кофейню' });
-      if (!baseMenu.categories.some(c => c.items.some(i => i.id === body.itemId))) return send(404, { error: 'Позиция не найдена' });
+      if (!fullCategories().some(c => c.items.some(i => i.id === body.itemId))) return send(404, { error: 'Позиция не найдена' });
       if (body.stopped) P('INSERT OR IGNORE INTO stoplist (location_id, item_id, since) VALUES (?,?,?)').run(loc, body.itemId, Date.now());
       else P('DELETE FROM stoplist WHERE location_id = ? AND item_id = ?').run(loc, body.itemId);
       STOP = loadStop();
@@ -782,16 +792,47 @@ async function api(req, res, url) {
     if (req.method === 'GET' && p === '/api/admin/menu') {
       const ov = new Map(P('SELECT item_id, variant, price FROM menu_overrides').all().map(r => [r.item_id + ':' + r.variant, r.price]));
       const hidden = new Set(P('SELECT item_id FROM item_hidden').all().map(r => r.item_id));
-      return send(200, baseMenu.categories.map(c => ({
+      return send(200, fullCategories().map(c => ({
         id: c.id, name: c.name, name_kk: c.name_kk, name_en: c.name_en,
-        items: c.items.map(i => ({ id: i.id, name: i.name, name_kk: i.name_kk, name_en: i.name_en, hidden: hidden.has(i.id),
+        items: c.items.map(i => ({ id: i.id, custom: !!i.custom, name: i.name, name_kk: i.name_kk, name_en: i.name_en, hidden: hidden.has(i.id),
           variants: i.variants.map((v, idx) => ({ label: v.label, base: v.price, price: ov.has(i.id + ':' + idx) ? ov.get(i.id + ':' + idx) : v.price, overridden: ov.has(i.id + ':' + idx) })) }))
       })));
     }
+    if (req.method === 'POST' && p === '/api/admin/menu/items') {
+      const body = await readBody(req);
+      const cat = baseMenu.categories.find(c => c.id === body.category);
+      const name = clean(body.name, 80);
+      if (!cat) return send(400, { error: 'Выберите категорию' });
+      if (!name) return send(400, { error: 'Укажите название' });
+      const vs = (Array.isArray(body.variants) ? body.variants : []).slice(0, 4);
+      if (!vs.length || vs.some(v => !(Number.isInteger(v.price) && v.price >= 1 && v.price <= 1000000))) return send(400, { error: 'Цена: целое число от 1 до 1 000 000' });
+      const data = { name, variants: vs.map(v => ({ label: clean(v.label, 20), price: v.price })) };
+      const kk = clean(body.name_kk, 80), en = clean(body.name_en, 80);
+      if (kk) data.name_kk = kk;
+      if (en) data.name_en = en;
+      const id = 'c-' + crypto.randomBytes(4).toString('hex');
+      P('INSERT INTO menu_custom (id, category, data, created_at) VALUES (?,?,?,?)').run(id, cat.id, JSON.stringify(data), Date.now());
+      MENU = buildMenu(); popCache.at = 0;
+      audit('admin', 'menu.add', name + ' / ' + cat.id, req);
+      return send(201, { ok: true, id });
+    }
     const mi = p.match(/^\/api\/admin\/menu\/items\/([a-z0-9-]{1,40})$/);
+    if (req.method === 'DELETE' && mi) {
+      const row = P('SELECT data FROM menu_custom WHERE id = ?').get(mi[1]);
+      if (!row) return send(404, { error: 'Удалять можно только добавленные позиции; остальные можно скрыть' });
+      tx(db, () => {
+        P('DELETE FROM menu_custom WHERE id = ?').run(mi[1]);
+        P('DELETE FROM stoplist WHERE item_id = ?').run(mi[1]);
+        P('DELETE FROM menu_overrides WHERE item_id = ?').run(mi[1]);
+        P('DELETE FROM item_hidden WHERE item_id = ?').run(mi[1]);
+      });
+      STOP = loadStop(); MENU = buildMenu(); popCache.at = 0;
+      audit('admin', 'menu.delete', JSON.parse(row.data).name, req);
+      return send(200, { ok: true });
+    }
     if (req.method === 'PATCH' && mi) {
       const body = await readBody(req);
-      const item = baseMenu.categories.flatMap(c => c.items).find(i => i.id === mi[1]);
+      const item = fullCategories().flatMap(c => c.items).find(i => i.id === mi[1]);
       if (!item) return send(404, { error: 'Позиция не найдена' });
       if (Array.isArray(body.variants)) {
         for (const x of body.variants) if (x !== null && !(Number.isInteger(x) && x >= 1 && x <= 1000000)) return send(400, { error: 'Цена: целое число от 1 до 1 000 000' });
@@ -846,7 +887,7 @@ async function api(req, res, url) {
     }
     if (req.method === 'GET' && p === '/api/admin/orders.csv') {
       audit('admin', 'export.csv', days + ' дн.', req);
-      return send(200, ordersCsv(days), { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="drinkstar-orders-${days}d.csv"` });
+      return sendText(req, res, 200, ordersCsv(days), { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="drinkstar-orders-${days}d.csv"` });
     }
   }
   send(404, { error: 'Не найдено' });
