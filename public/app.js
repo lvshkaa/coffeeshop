@@ -56,7 +56,7 @@ function buyButtons(it) {
 function showTab(id) {
   const c = MENU.categories.find(x => x.id === id);
   $('#panel').innerHTML = (c.note ? `<div class="menu-note">${esc(tr(c, 'note'))}</div>` : '') + c.items.map(i =>
-    `<div class="item"><div class="name">${esc(tr(i, 'name'))}${i.star ? ' <span class="star">★</span>' : ''}${tr(i, 'desc') ? `<small>${esc(tr(i, 'desc'))}</small>` : ''}</div><div class="dots"></div><div class="buy">${buyButtons(i)}</div></div>`).join('');
+    `<div class="item"><div class="name">${esc(tr(i, 'name'))}${i.star ? ' <span class="star">' + ic('star') + '</span>' : ''}${tr(i, 'desc') ? `<small>${esc(tr(i, 'desc'))}</small>` : ''}</div><div class="dots"></div><div class="buy">${buyButtons(i)}</div></div>`).join('');
   [...$('#tabs').children].forEach(b => b.classList.toggle('active', b.dataset.id === id));
 }
 // фото напитка: либо отдельный файл (photo.src), либо кадр из общей картинки (photo.pos + photo.size)
@@ -72,7 +72,7 @@ function renderMenu() {
   showTab(cats[0].id);
   const fall = MENU.categories.find(c => c.id === 'fall');
   $('#fallGrid').innerHTML = fall.items.map(i =>
-    `<div class="fall-card">${drinkPhoto(i)}<h3>${esc(tr(i, 'name'))}${i.star ? ' ★' : ''}</h3><p>${esc(tr(i, 'desc'))}</p><div class="buy" style="justify-content:flex-start">${buyButtons(i)}</div></div>`).join('');
+    `<div class="fall-card">${drinkPhoto(i)}<h3>${esc(tr(i, 'name'))}${i.star ? ' ' + ic('star') : ''}</h3><p>${esc(tr(i, 'desc'))}</p><div class="buy" style="justify-content:flex-start">${buyButtons(i)}</div></div>`).join('');
   $('#addonList').innerHTML = MENU.addons.map(a => `<li><span>${esc(tr(a, 'name'))}</span><b>+${a.price} ₸</b></li>`).join('');
 }
 document.addEventListener('click', e => {
@@ -92,6 +92,33 @@ function renderLocs() {
   }).join('');
 }
 
+// --- отзывы ---
+const starsHtml = n => Array.from({ length: 5 }, (_, i) => ic('star', i < n ? '' : 'ic-off')).join('');
+let rvShown = 0;
+async function loadReviews(reset) {
+  if (reset) rvShown = 0;
+  let d;
+  try { d = await api('/api/reviews?limit=6&offset=' + rvShown); } catch { return; }
+  if (reset) {
+    const max = Math.max(1, ...d.stars);
+    $('#rvSummary').innerHTML = d.count
+      ? `<div class="rv-avg"><b>${d.avg.toFixed(1)}</b><div class="rv-stars">${starsHtml(Math.round(d.avg))}</div><small>${t('rv.count', { n: d.count })}</small></div>
+         <div class="rv-bars">${[5, 4, 3, 2, 1].map(s => `<div class="rv-bar"><span>${s}</span><div><i style="width:${d.stars[s - 1] / max * 100}%"></i></div><em>${d.stars[s - 1]}</em></div>`).join('')}</div>`
+      : `<p class="rv-empty">${t('rv.empty')}</p>`;
+    $('#rvGrid').innerHTML = '';
+  }
+  $('#rvGrid').insertAdjacentHTML('beforeend', d.items.map(r => {
+    const loc = LOCS && LOCS.find(l => l.id === r.locationId);
+    return `<article class="rv-card"><div class="rv-head"><span class="rv-stars">${starsHtml(r.rating)}</span><small>${date(r.createdAt)}</small></div>
+      ${r.text ? `<p>${esc(r.text)}</p>` : ''}
+      <div class="rv-by"><b>${esc(r.name || '—')}</b>${loc ? ` · ${esc(tr(loc, 'address'))}` : ''}</div>
+      ${r.reply ? `<div class="rv-reply"><b>${t('rv.replyby')}</b>${esc(r.reply)}</div>` : ''}</article>`;
+  }).join(''));
+  rvShown += d.items.length;
+  $('#rvMore').innerHTML = rvShown < d.count ? `<button class="btn" id="rvMoreBtn">${t('rv.more')}</button>` : '';
+  const mb = $('#rvMoreBtn'); if (mb) mb.onclick = () => loadReviews(false);
+}
+
 // --- панели ---
 function closeAll() { document.querySelectorAll('.drawer').forEach(d => d.classList.remove('on')); $('#overlay').classList.remove('on'); }
 function openDrawer(id) { closeAll(); $(id).classList.add('on'); $('#overlay').classList.add('on'); }
@@ -103,7 +130,7 @@ $('#closeCart').onclick = closeAll;
 // ====== КЛУБ ======
 function renderClubBtn() {
   const b = $('#clubBtn');
-  b.innerHTML = member() ? `★ <b>${fmtB(ME.customer.bonus)}</b>` : `<span class="long">${t('cl.btn')}</span><span class="short">★ ${t('cl.short')}</span>`;
+  b.innerHTML = member() ? `${ic('star')} <b>${fmtB(ME.customer.bonus)}</b>` : `<span class="long">${t('cl.btn')}</span><span class="short">${ic('star')} ${t('cl.short')}</span>`;
   b.classList.toggle('in', member());
 }
 async function refreshMe() {
@@ -268,7 +295,7 @@ async function submitOrder(e) {
   $('.nav-actions').insertBefore(btn, $('#cartBtn'));
   const drawer = document.createElement('aside');
   drawer.className = 'drawer'; drawer.id = 'clubDrawer';
-  drawer.innerHTML = `<div class="drawer-head"><h3>★ DrinkStar Club</h3><button class="x" id="closeClub" aria-label="${esc(t('nav.close'))}">×</button></div><div class="drawer-body" id="clubBody"></div>`;
+  drawer.innerHTML = `<div class="drawer-head"><h3>${ic('star')} DrinkStar Club</h3><button class="x" id="closeClub" aria-label="${esc(t('nav.close'))}">${ic('x')}</button></div><div class="drawer-body" id="clubBody"></div>`;
   document.body.appendChild(drawer);
   $('#closeClub').onclick = closeAll;
   renderClubBtn();
@@ -291,7 +318,7 @@ async function submitOrder(e) {
   const line = [co.name, co.bin && (t('lg.bin') + ' ' + co.bin), co.address, co.phone, co.email].filter(Boolean).join(' · ');
   $('#companyLine').textContent = line || (co.draft ? t('lg.companyph') : '');
   await refreshMe();
-  renderMenu(); renderLocs(); renderCartBtn();
+  renderMenu(); renderLocs(); renderCartBtn(); loadReviews(true);
 })();
 
 // --- шапка и появление блоков ---

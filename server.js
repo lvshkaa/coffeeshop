@@ -52,7 +52,11 @@ const ERR = {
   noOrder: ['Заказ не найден', 'Тапсырыс табылмады', 'Order not found'],
   forbidden: ['Запрещено', 'Тыйым салынған', 'Forbidden'],
   needConsent: ['Подтвердите согласие с условиями', 'Шарттармен келісімді растаңыз', 'Please accept the terms to continue'],
-  notLoggedIn: ['Войдите в клуб', 'Клубқа кіріңіз', 'Please sign in']
+  notLoggedIn: ['Войдите в клуб', 'Клубқа кіріңіз', 'Please sign in'],
+  needDone: ['Отзыв можно оставить после получения заказа', 'Тапсырысты алғаннан кейін пікір қалдыруға болады', 'You can leave a review after you have collected your order'],
+  reviewExists: ['Вы уже оставили отзыв на этот заказ', 'Бұл тапсырысқа пікір қалдырып қойдыңыз', 'You have already reviewed this order'],
+  badRating: ['Поставьте оценку от 1 до 5', '1-ден 5-ке дейін баға қойыңыз', 'Please give a rating from 1 to 5'],
+  tooManyReviews: ['Слишком много отзывов, попробуйте позже', 'Пікір тым көп, кейінірек қайталаңыз', 'Too many reviews, please try again later']
 };
 const langOf = req => { const l = String(req.headers['x-lang'] || ''); return ['ru', 'kk', 'en'].includes(l) ? l : 'ru'; };
 function E(x, key, vars) {
@@ -79,6 +83,17 @@ const provider = payName === 'none' ? null : loadProvider('payments', payName, '
 const sms = loadProvider('sms', (process.env.SMS_PROVIDER || 'demo').toLowerCase(), 'SMS-провайдера');
 
 const db = open(process.env.DATA_DIR || DATA);
+
+// --- сотрудники: личные аккаунты бариста со сменами ---
+const metaGet = k => db.prepare('SELECT value FROM meta WHERE key = ?').get(k)?.value;
+if (!metaGet('pin_secret')) db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)').run('pin_secret', crypto.randomBytes(32).toString('hex'));
+const PIN_SECRET = metaGet('pin_secret');
+const hashPin = pin => crypto.createHmac('sha256', PIN_SECRET).update(String(pin)).digest('hex');
+const STAFF_SESSION_TTL = 14 * 3600e3;
+// первый запуск: STAFF_PIN становится PIN менеджера; бариста владелец заводит в аналитике
+if (db.prepare('SELECT COUNT(*) n FROM staff').get().n === 0) {
+  db.prepare('INSERT INTO staff (name, pin_hash, role, active, created_at) VALUES (?,?,?,?,?)').run('Менеджер', hashPin(STAFF_PIN), 'manager', 1, Date.now());
+}
 const STATUSES = ['new', 'preparing', 'ready', 'done', 'cancelled'];
 const ACTIVE = ['new', 'preparing', 'ready'];
 
@@ -146,6 +161,7 @@ const rowToOrder = r => ({
   items: JSON.parse(r.items), total: r.total, bonusUsed: r.bonus_used, payable: r.payable,
   cashback: r.cashback, member: !!r.customer_id
 });
+const reviewOf = token => db.prepare('SELECT rating, text, reply FROM reviews WHERE order_token = ?').get(token) || null;
 const publicOrder = r => {
   const o = rowToOrder(r);
   return {
@@ -154,12 +170,13 @@ const publicOrder = r => {
     cashback: o.member && r.status !== 'cancelled' && !r.cashback_done ? o.cashback : 0,
     cashbackDone: !!r.cashback_done,
     payUrl: r.status === 'awaiting_payment' ? r.pay_url : undefined,
+    review: reviewOf(r.token), canReview: r.status === 'done' && !reviewOf(r.token),
     location: locById.get(o.locationId)?.address, createdAt: o.createdAt
   };
 };
 
 // --- смена статуса: возвраты и начисления бонусов ---
-function setStatus(token, status) {
+function setStatus(token, status, staffId) {
   return tx(db, () => {
     const o = db.prepare('SELECT * FROM orders WHERE token = ?').get(token);
     if (!o) return false;
@@ -172,6 +189,12 @@ function setStatus(token, status) {
       db.prepare('UPDATE orders SET cashback_done = 1 WHERE token = ?').run(token);
     }
     db.prepare('UPDATE orders SET status = ? WHERE token = ?').run(status, token);
+    if (staffId) {
+      const now = Date.now();
+      if (status === 'preparing') db.prepare('UPDATE orders SET accepted_by = COALESCE(accepted_by, ?), accepted_at = COALESCE(accepted_at, ?) WHERE token = ?').run(staffId, now, token);
+      if (status === 'ready') db.prepare('UPDATE orders SET ready_by = ?, ready_at = ? WHERE token = ?').run(staffId, now, token);
+      if (status === 'done') db.prepare('UPDATE orders SET done_by = ?, done_at = ? WHERE token = ?').run(staffId, now, token);
+    }
     return true;
   });
 }
@@ -193,6 +216,9 @@ function markPaid(token) {
   });
 }
 function sweep() {
+  const cut = Date.now() - STAFF_SESSION_TTL;
+  db.prepare('UPDATE shifts SET ended_at = started_at + ? WHERE ended_at IS NULL AND started_at < ?').run(STAFF_SESSION_TTL, cut);
+  db.prepare('DELETE FROM staff_sessions WHERE expires_at < ?').run(Date.now());
   const old = db.prepare("SELECT token FROM orders WHERE status = 'awaiting_payment' AND created_at < ?").all(Date.now() - PAY_TTL);
   for (const { token } of old) {
     setStatus(token, 'cancelled');
@@ -290,6 +316,14 @@ function stats(days, locId) {
     byLocation: Object.values(byLoc).sort((a, b) => b.revenue - a.revenue),
     byDay: days_, byHour,
     topItems: Object.values(top).sort((a, b) => b.qty - a.qty).slice(0, 10),
+    reviews: (() => {
+      const r = db.prepare("SELECT COUNT(*) n, COALESCE(AVG(rating), 0) a FROM reviews WHERE created_at >= ? AND status = 'published'").get(from);
+      return { count: r.n, avg: Math.round(r.a * 10) / 10 };
+    })(),
+    staff: db.prepare(`SELECT s.id, s.name, COUNT(*) orders, ROUND(AVG(o.ready_at - o.created_at) / 60000.0, 1) avgMin
+        FROM orders o JOIN staff s ON s.id = o.ready_by
+        WHERE o.created_at >= ? AND o.ready_at IS NOT NULL${locId ? ' AND o.location_id = ?' : ''}
+        GROUP BY s.id ORDER BY orders DESC`).all(...(locId ? [from, locId] : [from])).map(r => ({ id: r.id, name: r.name, orders: r.orders, avgMin: r.avgMin })),
     club: {
       totalMembers: db.prepare('SELECT COUNT(*) n FROM customers').get().n,
       newMembers: db.prepare('SELECT COUNT(*) n FROM customers WHERE created_at >= ?').get(from).n,
@@ -309,6 +343,23 @@ function ordersCsv(days) {
     JSON.parse(r.items).map(i => `${i.qty}x ${i.name} ${i.variant}${i.addons.length ? ' (' + i.addons.join(', ') + ')' : ''}`).join('; ')]);
   return '﻿' + [head, ...lines].map(l => l.map(csvCell).join(';')).join('\r\n');
 }
+
+// --- личные аккаунты персонала ---
+function staffFrom(req) {
+  const t = String(req.headers['x-staff-token'] || '');
+  if (!t) return null;
+  return db.prepare(`SELECT s.id, s.name, s.role, ss.shift_id, sh.location_id AS loc, sh.started_at
+      FROM staff_sessions ss JOIN staff s ON s.id = ss.staff_id LEFT JOIN shifts sh ON sh.id = ss.shift_id
+      WHERE ss.token_hash = ? AND ss.expires_at > ? AND s.active = 1`).get(sha(t), Date.now()) || null;
+}
+function randomPin() {
+  for (let i = 0; i < 100; i++) {
+    const pin = String(crypto.randomInt(1000, 10000));
+    if (!db.prepare('SELECT 1 FROM staff WHERE pin_hash = ?').get(hashPin(pin))) return pin;
+  }
+  throw new Error('нет свободных PIN');
+}
+function endShift(id) { if (id) db.prepare('UPDATE shifts SET ended_at = ? WHERE id = ? AND ended_at IS NULL').run(Date.now(), id); }
 
 // --- API ---
 async function api(req, res, url) {
@@ -395,6 +446,7 @@ async function api(req, res, url) {
     tx(db, () => {
       // заказы остаются для учёта, но без персональных данных
       db.prepare("UPDATE orders SET name = '', phone = '', comment = '', customer_id = NULL WHERE customer_id = ?").run(c.id);
+      db.prepare("UPDATE reviews SET name = '', customer_id = NULL WHERE customer_id = ?").run(c.id);
       db.prepare('DELETE FROM bonus_tx WHERE customer_id = ?').run(c.id);
       db.prepare('DELETE FROM sessions WHERE customer_id = ?').run(c.id);
       db.prepare('DELETE FROM sms_codes WHERE phone = ?').run(c.phone);
@@ -475,23 +527,83 @@ async function api(req, res, url) {
     return send(res, 200, { ok: true });
   }
 
-  // ---- персонал ----
+  // ---- отзывы ----
+  const rv = p.match(/^\/api\/orders\/([a-f0-9]+)\/review$/);
+  if (req.method === 'POST' && rv) {
+    if (hit('review' + clientIp(req), 3600e3, 5)) return send(res, 429, { error: E(req, 'tooManyReviews') });
+    const o = db.prepare('SELECT * FROM orders WHERE token = ?').get(rv[1]);
+    if (!o) return send(res, 404, { error: E(req, 'noOrder') });
+    const body = await readBody(req);
+    const rating = body.rating | 0;
+    if (rating < 1 || rating > 5) return send(res, 400, { error: E(req, 'badRating') });
+    if (o.status !== 'done') return send(res, 400, { error: E(req, 'needDone') });
+    if (db.prepare('SELECT 1 FROM reviews WHERE order_token = ?').get(o.token)) return send(res, 409, { error: E(req, 'reviewExists') });
+    const text = String(body.text || '').trim().slice(0, 500);
+    const name = String(o.name || '').trim().split(/\s+/)[0].slice(0, 30); // на сайте показываем только имя
+    db.prepare('INSERT INTO reviews (order_token, customer_id, name, location_id, rating, text, created_at) VALUES (?,?,?,?,?,?,?)')
+      .run(o.token, o.customer_id ?? null, name, o.location_id, rating, text, Date.now());
+    return send(res, 201, { ok: true });
+  }
+  if (req.method === 'GET' && p === '/api/reviews') {
+    const limit = Math.min(Math.max(+url.searchParams.get('limit') || 6, 1), 50);
+    const offset = Math.max(+url.searchParams.get('offset') || 0, 0);
+    const sum = db.prepare("SELECT COUNT(*) n, COALESCE(AVG(rating), 0) a FROM reviews WHERE status = 'published'").get();
+    const stars = [0, 0, 0, 0, 0];
+    for (const r of db.prepare("SELECT rating, COUNT(*) n FROM reviews WHERE status = 'published' GROUP BY rating").all()) stars[r.rating - 1] = r.n;
+    const itemsOut = db.prepare("SELECT id, name, rating, text, location_id, reply, created_at FROM reviews WHERE status = 'published' ORDER BY created_at DESC LIMIT ? OFFSET ?").all(limit, offset)
+      .map(r => ({ id: r.id, name: r.name, rating: r.rating, text: r.text, locationId: r.location_id, reply: r.reply, createdAt: r.created_at }));
+    return send(res, 200, { count: sum.n, avg: Math.round(sum.a * 10) / 10, stars, items: itemsOut });
+  }
+
+  // ---- персонал: личный вход по PIN, смены ----
+  if (req.method === 'POST' && p === '/api/staff/login') {
+    const key = 'stafflogin' + clientIp(req), now = Date.now();
+    const fails = (buckets.get(key) || []).filter(t => now - t < 5 * 60e3);
+    if (fails.length >= 8) return send(res, 429, { error: 'Слишком много попыток. Подождите 5 минут.' });
+    const body = await readBody(req);
+    const pin = String(body.pin || '').trim();
+    const row = /^\d{4,8}$/.test(pin) ? db.prepare('SELECT * FROM staff WHERE pin_hash = ? AND active = 1').get(hashPin(pin)) : null;
+    if (!row) { fails.push(now); buckets.set(key, fails); return send(res, 401, { error: 'Неверный PIN' }); }
+    const locId = String(body.locationId || '');
+    if (!(locById.has(locId) || (row.role === 'manager' && locId === 'all'))) return send(res, 400, { error: 'Выберите кофейню' });
+    const token = crypto.randomBytes(24).toString('hex');
+    const shiftId = tx(db, () => {
+      db.prepare('UPDATE shifts SET ended_at = ? WHERE staff_id = ? AND ended_at IS NULL').run(now, row.id);
+      const id = db.prepare('INSERT INTO shifts (staff_id, location_id, started_at) VALUES (?,?,?)').run(row.id, locId, now).lastInsertRowid;
+      db.prepare('INSERT INTO staff_sessions (token_hash, staff_id, shift_id, expires_at) VALUES (?,?,?,?)').run(sha(token), row.id, id, now + STAFF_SESSION_TTL);
+      return id;
+    });
+    return send(res, 200, { token, staff: { id: row.id, name: row.name, role: row.role }, shift: { id: shiftId, locationId: locId, startedAt: now } });
+  }
   if (p.startsWith('/api/staff/')) {
-    const auth = pinAuth(req, STAFF_PIN, 'staff');
-    if (auth === 'blocked') return send(res, 429, { error: 'Слишком много попыток. Подождите 5 минут.' });
-    if (auth !== 'ok') return send(res, 401, { error: 'Неверный PIN' });
+    const me = staffFrom(req);
+    if (!me) return send(res, 401, { error: 'Нужен вход' });
+    const eff = me.loc === 'all' ? null : me.loc; // бариста видит только кофейню своей смены
+    if (req.method === 'GET' && p === '/api/staff/me') {
+      const handled = db.prepare('SELECT COUNT(*) n FROM orders WHERE (ready_by = ? OR done_by = ?) AND COALESCE(ready_at, done_at) >= ?').get(me.id, me.id, me.started_at).n;
+      return send(res, 200, { id: me.id, name: me.name, role: me.role, locationId: me.loc, startedAt: me.started_at, handled });
+    }
+    if (req.method === 'POST' && p === '/api/staff/logout') {
+      endShift(me.shift_id);
+      db.prepare('DELETE FROM staff_sessions WHERE token_hash = ?').run(sha(String(req.headers['x-staff-token'])));
+      return send(res, 200, { ok: true });
+    }
     if (req.method === 'GET' && p === '/api/staff/orders') {
-      const rows = db.prepare(`SELECT * FROM orders WHERE status IN ('new','preparing','ready') ORDER BY created_at`).all();
-      return send(res, 200, rows.map(r => ({ ...rowToOrder(r), location: locById.get(r.location_id)?.address })));
+      const rows = db.prepare(`SELECT o.*, a.name AS accepted_name, r.name AS ready_name FROM orders o
+          LEFT JOIN staff a ON a.id = o.accepted_by LEFT JOIN staff r ON r.id = o.ready_by
+          WHERE o.status IN ('new','preparing','ready') ORDER BY o.created_at`).all()
+        .filter(r => !eff || r.location_id === eff);
+      return send(res, 200, rows.map(r => ({ ...rowToOrder(r), location: locById.get(r.location_id)?.address, acceptedBy: r.accepted_name || '', readyBy: r.ready_name || '' })));
     }
     const upd = p.match(/^\/api\/staff\/orders\/([a-f0-9]+)$/);
     if (req.method === 'PATCH' && upd) {
       const { status } = await readBody(req);
-      const o = db.prepare('SELECT status FROM orders WHERE token = ?').get(upd[1]);
+      const o = db.prepare('SELECT status, location_id FROM orders WHERE token = ?').get(upd[1]);
       if (!o) return send(res, 404, { error: 'Не найден' });
+      if (eff && o.location_id !== eff) return send(res, 403, { error: 'Заказ другой кофейни' });
       if (!STATUSES.includes(status)) return send(res, 400, { error: 'Неверный статус' });
       if (!ACTIVE.includes(o.status)) return send(res, 409, { error: 'Заказ уже закрыт' });
-      setStatus(upd[1], status);
+      setStatus(upd[1], status, me.id);
       return send(res, 200, { ok: true });
     }
   }
@@ -501,6 +613,71 @@ async function api(req, res, url) {
     const auth = pinAuth(req, ADMIN_PIN, 'admin');
     if (auth === 'blocked') return send(res, 429, { error: 'Слишком много попыток. Подождите 5 минут.' });
     if (auth !== 'ok') return send(res, 401, { error: 'Неверный PIN' });
+    // сотрудники
+    if (req.method === 'GET' && p === '/api/admin/staff') {
+      const since = Date.now() - 30 * 86400e3, live = Date.now() - STAFF_SESSION_TTL;
+      const rows = db.prepare(`SELECT s.*,
+          (SELECT MAX(sh.started_at) FROM shifts sh WHERE sh.staff_id = s.id) AS last_shift,
+          (SELECT sh.location_id FROM shifts sh WHERE sh.staff_id = s.id AND sh.ended_at IS NULL AND sh.started_at > ? ORDER BY sh.started_at DESC LIMIT 1) AS on_shift,
+          (SELECT COUNT(*) FROM orders o WHERE o.ready_by = s.id AND o.created_at >= ?) AS handled
+          FROM staff s ORDER BY s.active DESC, s.name`).all(live, since);
+      return send(res, 200, rows.map(r => ({ id: r.id, name: r.name, role: r.role, active: !!r.active, lastShift: r.last_shift, onShift: r.on_shift, handled30: r.handled })));
+    }
+    if (req.method === 'POST' && p === '/api/admin/staff') {
+      const body = await readBody(req);
+      const name = String(body.name || '').trim().slice(0, 40);
+      if (!name) return send(res, 400, { error: 'Укажите имя' });
+      const role = body.role === 'manager' ? 'manager' : 'barista';
+      let pin = String(body.pin || '').trim();
+      if (pin) {
+        if (!/^\d{4,8}$/.test(pin)) return send(res, 400, { error: 'PIN: от 4 до 8 цифр' });
+        if (db.prepare('SELECT 1 FROM staff WHERE pin_hash = ?').get(hashPin(pin))) return send(res, 409, { error: 'Такой PIN уже занят, выберите другой' });
+      } else pin = randomPin();
+      const id = db.prepare('INSERT INTO staff (name, pin_hash, role, active, created_at) VALUES (?,?,?,?,?)').run(name, hashPin(pin), role, 1, Date.now()).lastInsertRowid;
+      return send(res, 201, { id, pin });
+    }
+    const st = p.match(/^\/api\/admin\/staff\/(\d+)$/);
+    if (req.method === 'PATCH' && st) {
+      const body = await readBody(req);
+      const row = db.prepare('SELECT * FROM staff WHERE id = ?').get(+st[1]);
+      if (!row) return send(res, 404, { error: 'Сотрудник не найден' });
+      let newPin;
+      tx(db, () => {
+        if (typeof body.name === 'string' && body.name.trim()) db.prepare('UPDATE staff SET name = ? WHERE id = ?').run(body.name.trim().slice(0, 40), row.id);
+        if (body.role === 'barista' || body.role === 'manager') db.prepare('UPDATE staff SET role = ? WHERE id = ?').run(body.role, row.id);
+        if (typeof body.active === 'boolean') {
+          db.prepare('UPDATE staff SET active = ? WHERE id = ?').run(body.active ? 1 : 0, row.id);
+          if (!body.active) { db.prepare('DELETE FROM staff_sessions WHERE staff_id = ?').run(row.id); db.prepare('UPDATE shifts SET ended_at = ? WHERE staff_id = ? AND ended_at IS NULL').run(Date.now(), row.id); }
+        }
+        if (body.resetPin) {
+          newPin = randomPin();
+          db.prepare('UPDATE staff SET pin_hash = ? WHERE id = ?').run(hashPin(newPin), row.id);
+          db.prepare('DELETE FROM staff_sessions WHERE staff_id = ?').run(row.id);
+        }
+      });
+      return send(res, 200, { ok: true, pin: newPin });
+    }
+    if (req.method === 'GET' && p === '/api/admin/shifts') {
+      const from = Date.now() - Math.min(Math.max(+url.searchParams.get('days') || 7, 1), 90) * 86400e3;
+      const rows = db.prepare(`SELECT sh.*, s.name FROM shifts sh JOIN staff s ON s.id = sh.staff_id WHERE sh.started_at >= ? ORDER BY sh.started_at DESC LIMIT 200`).all(from);
+      return send(res, 200, rows.map(r => ({
+        id: r.id, name: r.name, locationId: r.location_id, startedAt: r.started_at, endedAt: r.ended_at,
+        orders: db.prepare('SELECT COUNT(*) n FROM orders WHERE ready_by = ? AND ready_at >= ? AND ready_at <= ?').get(r.staff_id, r.started_at, r.ended_at || Date.now()).n
+      })));
+    }
+    // отзывы: модерация и ответ владельца
+    if (req.method === 'GET' && p === '/api/admin/reviews') {
+      const rows = db.prepare('SELECT r.*, o.number FROM reviews r JOIN orders o ON o.token = r.order_token ORDER BY r.created_at DESC LIMIT 200').all();
+      return send(res, 200, rows.map(r => ({ id: r.id, name: r.name, rating: r.rating, text: r.text, status: r.status, reply: r.reply, locationId: r.location_id, createdAt: r.created_at, orderNumber: r.number })));
+    }
+    const rvp = p.match(/^\/api\/admin\/reviews\/(\d+)$/);
+    if (req.method === 'PATCH' && rvp) {
+      const body = await readBody(req);
+      if (!db.prepare('SELECT 1 FROM reviews WHERE id = ?').get(+rvp[1])) return send(res, 404, { error: 'Отзыв не найден' });
+      if (body.status === 'published' || body.status === 'hidden') db.prepare('UPDATE reviews SET status = ? WHERE id = ?').run(body.status, +rvp[1]);
+      if (typeof body.reply === 'string') db.prepare('UPDATE reviews SET reply = ? WHERE id = ?').run(body.reply.trim().slice(0, 500), +rvp[1]);
+      return send(res, 200, { ok: true });
+    }
     const days = Math.min(Math.max(+url.searchParams.get('days') || 7, 1), 365);
     if (req.method === 'GET' && p === '/api/admin/stats') {
       const loc = url.searchParams.get('loc');
@@ -542,7 +719,7 @@ http.createServer(async (req, res) => {
   }
 }).listen(PORT, () => {
   console.log(`DrinkStar: http://localhost:${PORT}`);
-  console.log(`Персонал:  http://localhost:${PORT}/staff.html   (PIN ${STAFF_PIN === DEFAULT_STAFF_PIN ? DEFAULT_STAFF_PIN + ', смените!' : 'задан'})`);
+  console.log(`Персонал:  http://localhost:${PORT}/staff.html   (личные PIN бариста заводит владелец в аналитике; PIN менеджера из STAFF_PIN: ${STAFF_PIN === DEFAULT_STAFF_PIN ? DEFAULT_STAFF_PIN + ', смените!' : 'задан'})`);
   console.log(`Владелец:  http://localhost:${PORT}/admin.html   (PIN ${ADMIN_PIN === DEFAULT_ADMIN_PIN ? DEFAULT_ADMIN_PIN + ', смените!' : 'задан'})`);
   console.log(`Оплата:    ${provider ? provider.name + (provider.name === 'mock' ? ' (демо)' : '') : 'отключена, только на кассе'}`);
   console.log(`SMS:       ${sms.name}${sms.demo ? ' (демо: код показывается на странице)' : ''}`);

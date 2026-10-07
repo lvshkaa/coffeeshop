@@ -5,3 +5,4 @@ data/drinkstar.db-wal
 data/drinkstar.db-shm
 .env
 .claude/
+*.zip

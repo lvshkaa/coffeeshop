@@ -65,7 +65,7 @@ header.solid{background:rgba(247,239,225,.92);backdrop-filter:blur(10px);box-sha
 .steam path:nth-child(2){animation-delay:1.3s}.steam path:nth-child(3){animation-delay:2.5s}
 @keyframes steam{0%{opacity:0;transform:translateY(20px)}40%{opacity:.5}100%{opacity:0;transform:translateY(-34px)}}
 .hero-tag{margin-top:46px;display:flex;gap:26px;flex-wrap:wrap;font-size:.85rem;font-weight:600;color:var(--brown)}
-.hero-tag span::before{content:"★ ";color:var(--caramel)}
+.hero-tag span::before{content:"";display:inline-block;width:.85em;height:.85em;margin-right:.4em;vertical-align:-.1em;background:var(--caramel);-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22black%22%3E%3Cpath%20d%3D%22M11.525%202.295a.53.53%200%200%201%20.95%200l2.31%204.679a2.123%202.123%200%200%200%201.595%201.16l5.166.756a.53.53%200%200%201%20.294.904l-3.736%203.638a2.123%202.123%200%200%200-.611%201.878l.882%205.14a.53.53%200%200%201-.771.56l-4.618-2.428a2.122%202.122%200%200%200-1.973%200L6.396%2021.01a.53.53%200%200%201-.77-.56l.881-5.139a2.122%202.122%200%200%200-.611-1.879L2.16%209.795a.53.53%200%200%201%20.294-.906l5.165-.755a2.122%202.122%200%200%200%201.597-1.16z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22black%22%3E%3Cpath%20d%3D%22M11.525%202.295a.53.53%200%200%201%20.95%200l2.31%204.679a2.123%202.123%200%200%200%201.595%201.16l5.166.756a.53.53%200%200%201%20.294.904l-3.736%203.638a2.123%202.123%200%200%200-.611%201.878l.882%205.14a.53.53%200%200%201-.771.56l-4.618-2.428a2.122%202.122%200%200%200-1.973%200L6.396%2021.01a.53.53%200%200%201-.77-.56l.881-5.139a2.122%202.122%200%200%200-.611-1.879L2.16%209.795a.53.53%200%200%201%20.294-.906l5.165-.755a2.122%202.122%200%200%200%201.597-1.16z%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat}
 @media(max-width:860px){.hero-grid{grid-template-columns:1fr}.cup-wrap{order:-1}.cup{width:220px}}
 
 /* fall */
@@ -159,10 +159,11 @@ footer a:hover{color:var(--caramel-2)}
       <li><a href="#fall" data-i18n="nav.fall">Новинки</a></li>
       <li><a href="#menu" data-i18n="nav.menu">Меню</a></li>
       <li><a href="#vibe" data-i18n="nav.vibe">Атмосфера</a></li>
+      <li><a href="#reviews" data-i18n="nav.reviews">Отзывы</a></li>
       <li><a href="#places" data-i18n="nav.places">Адреса</a></li>
       <li><a href="#club" data-i18n="nav.club">Club</a></li>
     </ul>
-    <div class="nav-actions"><div class="lang" aria-label="Language"></div><a id="myorder" class="myorder" href="#" hidden data-i18n="nav.myorder">Мой заказ</a><button class="cart-btn" id="cartBtn" data-i18n-aria="nav.cart"><span data-i18n="nav.cart">Корзина</span> <span id="cartCount">0</span></button></div>
+    <div class="nav-actions"><div class="lang" aria-label="Language"></div><a id="myorder" class="myorder" href="#" hidden data-i18n="nav.myorder">Мой заказ</a><button class="cart-btn" id="cartBtn" data-i18n-aria="nav.cart"><span class="cart-ic" data-ic="shopping-cart"></span><span data-i18n="nav.cart">Корзина</span> <span id="cartCount">0</span></button></div>
   </div>
 </header>
 
@@ -218,7 +219,7 @@ footer a:hover{color:var(--caramel-2)}
         <ul id="addonList"></ul>
       </div>
       <div class="box club-box">
-        <h3>★ DrinkStar Club</h3>
+        <h3><span data-ic="star"></span> DrinkStar Club</h3>
         <p id="clubBoxText">Участникам клуба: сироп к любому напитку — 0 ₸ и 5% бонусами с каждого заказа.</p>
         <button class="btn sm light" data-open-club style="margin-top:14px" data-i18n="menu.clubbtn">Войти в клуб</button>
       </div>
@@ -238,6 +239,17 @@ footer a:hover{color:var(--caramel-2)}
       <div class="ph" data-img="img/vibe-4.jpg"><span data-i18n="vibe.4">Бариста за работой</span></div>
     </div>
     
+  </div>
+</section>
+
+<section id="reviews">
+  <div class="wrap reveal">
+    <div class="eyebrow" data-i18n="rv.eyebrow">Отзывы</div>
+    <h2 data-i18n="rv.heading">Что говорят гости</h2>
+    <p class="lead" data-i18n="rv.lead">Оценки гостей после получения заказа</p>
+    <div class="rv-summary" id="rvSummary"></div>
+    <div class="rv-grid" id="rvGrid"></div>
+    <div class="rv-more" id="rvMore"></div>
   </div>
 </section>
 
@@ -286,11 +298,12 @@ footer a:hover{color:var(--caramel-2)}
 
 <div class="overlay" id="overlay"></div>
 <aside class="drawer" id="drawer">
-  <div class="drawer-head"><h3 data-i18n="cart.title">Ваш заказ</h3><button class="x" id="closeCart" data-i18n-aria="nav.close">×</button></div>
+  <div class="drawer-head"><h3 data-i18n="cart.title">Ваш заказ</h3><button class="x" id="closeCart" data-i18n-aria="nav.close"><span data-ic="x"></span></button></div>
   <div class="drawer-body" id="cartBody"></div>
 </aside>
 <div class="toast" id="toast"></div>
 <script>document.addEventListener("click",function(e){var a=e.target.closest("a[href^=\"#\"]");if(!a)return;var id=a.getAttribute("href").slice(1);var el=id?document.getElementById(id):document.body;if(!el)return;e.preventDefault();var y=id==="top"||!id?0:el.getBoundingClientRect().top+window.pageYOffset-68;window.scrollTo({top:y,behavior:"smooth"});});</script>
+<script src="icons.js"></script>
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>

@@ -10,19 +10,22 @@
 <style>
 :root{--serif:'Fraunces',Georgia,serif;--sans:'Manrope',system-ui,sans-serif}
 html:not([lang="en"]){--serif:'Noto Serif',Georgia,serif;--sans:'Noto Sans',system-ui,sans-serif}
-:root{--cream:#f7efe1;--cream-2:#efe3cf;--paper:#fffaf1;--espresso:#3a2a1e;--brown:#5b4128;--caramel:#b9772f;--caramel-2:#d9a05b;--muted:#8a7560;--line:#e3d3ba;--green:#40691f}
+:root{--cream:#f7efe1;--cream-2:#efe3cf;--paper:#fffaf1;--espresso:#3a2a1e;--brown:#5b4128;--caramel:#b9772f;--caramel-2:#d9a05b;--muted:#8a7560;--line:#e3d3ba;--green:#40691f;--red:#9a4a22}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 body{font-family:var(--sans);background:var(--cream);color:var(--espresso);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
 .top{display:flex;align-items:center;gap:12px;padding:14px max(22px,env(safe-area-inset-right)) 14px max(22px,env(safe-area-inset-left));padding-top:max(14px,env(safe-area-inset-top));background:var(--espresso);color:var(--cream);flex-wrap:wrap;position:sticky;top:0;z-index:5}
-.top h1{font-family:var(--serif);font-size:1.3rem;margin-right:auto}
-.top select,.top button,.top a.go{font:inherit;font-weight:700;font-size:16px;padding:9px 14px;border-radius:10px;border:none;cursor:pointer;background:#4a3524;color:var(--cream);text-decoration:none;min-height:42px;display:inline-flex;align-items:center}
+.top h1{font-family:var(--serif);font-size:1.3rem;margin-right:auto;display:flex;align-items:center;gap:8px}
+.top select,.top button,.top a.go{font:inherit;font-weight:700;font-size:16px;padding:9px 14px;border-radius:10px;border:none;cursor:pointer;background:#4a3524;color:var(--cream);text-decoration:none;min-height:42px;display:inline-flex;align-items:center;gap:7px}
 .top select{-webkit-appearance:none;appearance:none;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--cream) 50%),linear-gradient(135deg,var(--cream) 50%,transparent 50%);background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat}
 .top a.go{background:var(--caramel-2);color:var(--espresso)}
 .lang{display:inline-flex;border:1.5px solid #6a523c;border-radius:999px;overflow:hidden}
 .top .lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.75rem;padding:8px 11px;color:#cdb99d;cursor:pointer;min-height:0;border-radius:0}
 .top .lang button.on{background:var(--cream);color:var(--espresso)}
-main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-right)) 22px max(22px,env(safe-area-inset-left))}
+.tabs{display:flex;gap:6px;background:var(--espresso);padding:0 max(22px,env(safe-area-inset-left)) 12px;position:sticky;top:0;z-index:4;flex-wrap:wrap}
+.tabs button{font:inherit;font-weight:800;font-size:.9rem;padding:10px 18px;border-radius:999px;border:1.5px solid #6a523c;background:none;color:#cdb99d;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.tabs button.on{background:var(--cream);color:var(--espresso);border-color:var(--cream)}
+main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-right)) 40px max(22px,env(safe-area-inset-left))}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
 .kpi{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px}
 .kpi span{font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
@@ -42,6 +45,38 @@ main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-ri
 .list .r i{font-style:normal;color:var(--muted);font-weight:500;text-align:right}
 .meter{height:10px;background:var(--cream-2);border-radius:99px;overflow:hidden;margin-top:6px}
 .meter div{height:100%;background:var(--caramel)}
+.empty{color:var(--muted);font-size:.9rem}
+/* сотрудники */
+.pinbox{background:#fff3d6;border:1.5px solid #e8c777;color:#7a4a00;border-radius:14px;padding:14px 16px;font-weight:700;margin-bottom:16px;font-size:.95rem}
+.pinbox b{font-family:var(--serif);font-size:1.5rem;letter-spacing:.2em}
+.addform{display:grid;grid-template-columns:2fr 1fr 2fr auto;gap:10px;align-items:end}
+.addform label{display:grid;gap:5px;font-size:.78rem;font-weight:700;color:var(--brown)}
+.addform input,.addform select{font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--cream);width:100%;color:var(--espresso)}
+.btn{font:inherit;font-weight:800;font-size:.9rem;padding:11px 18px;border-radius:10px;border:none;cursor:pointer;background:var(--espresso);color:var(--cream);min-height:44px;display:inline-flex;align-items:center;gap:7px}
+.btn.sec{background:var(--cream-2);color:var(--brown)}
+.btn.danger{background:#f1dcd0;color:var(--red)}
+.btn.sm{padding:8px 12px;min-height:38px;font-size:.82rem}
+.staff-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.staff-row:last-child{border:0}
+.staff-row .nm{font-weight:800;min-width:150px}
+.staff-row .meta{flex:1;font-size:.82rem;color:var(--muted);font-weight:600;min-width:200px}
+.badge{display:inline-block;font-size:.68rem;font-weight:800;border-radius:6px;padding:2px 8px;letter-spacing:.04em;text-transform:uppercase}
+.badge.on{background:#e3efd6;color:var(--green)}.badge.off{background:var(--cream-2);color:var(--muted)}.badge.mgr{background:var(--caramel);color:#fff}.badge.hid{background:#f1dcd0;color:var(--red)}
+table.t{width:100%;border-collapse:collapse;font-size:.88rem}
+table.t th{text-align:left;color:var(--muted);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:8px 6px;border-bottom:1.5px solid var(--line)}
+table.t td{padding:9px 6px;border-bottom:1px dashed var(--line);font-weight:600}
+.tw{overflow-x:auto}
+/* отзывы */
+.rv{padding:16px 0;border-bottom:1px dashed var(--line)}
+.rv:last-child{border:0}
+.rv-top{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;font-size:.85rem;font-weight:700}
+.rv-top .st{color:var(--caramel-2)}
+
+
+.rv-top small{color:var(--muted);font-weight:600}
+.rv p{margin:8px 0;font-size:.95rem;font-weight:500;line-height:1.5}
+.rv textarea{font:inherit;font-size:16px;width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--cream);min-height:64px;resize:vertical;color:var(--espresso)}
+.rv .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;grid-template-columns:minmax(0,1fr);padding:20px}
 .login form{background:var(--paper);padding:34px;border-radius:24px;border:1px solid var(--line);display:grid;gap:14px;width:min(340px,92vw);text-align:center;margin:0 auto}
 .login .lang{justify-self:center;border-color:var(--line)}
@@ -50,16 +85,15 @@ main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-ri
 .login h1{font-family:var(--serif)}
 .login input{font-size:1.4rem;text-align:center;letter-spacing:.4em;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--cream);font-family:inherit;width:100%}
 .login button.go{padding:14px;border-radius:12px;border:none;background:var(--espresso);color:var(--cream);font-weight:800;font-family:inherit;font-size:1rem;cursor:pointer;min-height:48px}
-.login p{color:#9a4a22;font-size:.85rem;min-height:1.2em;font-weight:600}
-.empty{color:var(--muted);font-size:.9rem}
-@media(max-width:800px){.grid{grid-template-columns:minmax(0,1fr)}}
+.login p{color:var(--red);font-size:.85rem;min-height:1.2em;font-weight:600}
+@media(max-width:800px){.grid{grid-template-columns:minmax(0,1fr)}.addform{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
 <div class="login" id="login">
   <form id="loginForm">
     <div class="lang"></div>
-    <h1>★ DrinkStar<br><span data-i18n="ad.login">Аналитика</span></h1>
+    <h1><span data-ic="star"></span> DrinkStar<br><span data-i18n="ad.login">Аналитика</span></h1>
     <input id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off" autofocus>
     <p id="loginErr"></p>
     <button class="go" data-i18n="st.enter">Войти</button>
@@ -68,42 +102,77 @@ main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-ri
 
 <div id="app" hidden>
   <div class="top">
-    <h1 data-i18n="ad.title">★ Аналитика</h1>
+    <h1><span data-ic="star"></span> <span data-i18n="ad.login">Аналитика</span></h1>
     <div class="lang"></div>
-    <select id="days" aria-label="Period"><option value="1" data-i18n="ad.p1">Сегодня</option><option value="7" selected data-i18n="ad.p7">7 дней</option><option value="30" data-i18n="ad.p30">30 дней</option><option value="90" data-i18n="ad.p90">90 дней</option></select>
-    <select id="loc" aria-label="Location"></select>
-    <a class="go" id="csv" href="#" data-i18n="ad.csv">Скачать CSV</a>
+    <span id="statsCtl" style="display:contents">
+      <select id="days" aria-label="Period"><option value="1" data-i18n="ad.p1">Сегодня</option><option value="7" selected data-i18n="ad.p7">7 дней</option><option value="30" data-i18n="ad.p30">30 дней</option><option value="90" data-i18n="ad.p90">90 дней</option></select>
+      <select id="loc" aria-label="Location"></select>
+      <a class="go" id="csv" href="#"><span data-ic="check" hidden></span><span data-i18n="ad.csv">Скачать CSV</span></a>
+    </span>
     <button id="out" type="button" data-i18n="st.logout">Выйти</button>
   </div>
-  <main id="main"></main>
+  <div class="tabs">
+    <button data-view="stats" class="on"><span data-ic="clock"></span> <span data-i18n="ad.tab.stats">Аналитика</span></button>
+    <button data-view="staff"><span data-ic="users"></span> <span data-i18n="ad.tab.staff">Сотрудники</span></button>
+    <button data-view="reviews"><span data-ic="message-circle"></span> <span data-i18n="ad.tab.reviews">Отзывы</span></button>
+  </div>
+  <main>
+    <div id="view-stats"></div>
+    <div id="view-staff" hidden></div>
+    <div id="view-reviews" hidden></div>
+  </main>
 </div>
 
+<script src="icons.js"></script>
 <script src="i18n.js"></script>
 <script>
 const $ = s => document.querySelector(s);
+const { LANG, LOCALE } = window.I18N;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ /g, ' ') + ' ₸';
 const num = n => n.toLocaleString('ru-RU').replace(/ /g, ' ');
+const dt = ts => new Date(ts).toLocaleString(LOCALE, { timeZone: 'Asia/Almaty', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 let pin = sessionStorage.getItem('ds_apin') || '';
-let LOCS = {}, ITEMS = {};
-const H = () => ({ 'x-admin-pin': pin });
+let LOCS = {}, ITEMS = {}, view = 'stats';
+const H = () => ({ 'Content-Type': 'application/json', 'x-admin-pin': pin });
+const A = (url, opt = {}) => fetch(url, { ...opt, headers: H() });
+const locName = id => id === 'all' ? t('sf.allloc') : (LOCS[id] ? tr(LOCS[id], 'address') : id);
 const itemLabel = i => (ITEMS[i.id] ? tr(ITEMS[i.id], 'name') + (i.variant ? ' ' + I18N.num(i.variant) : '') : i.name);
+const stars = n => Array.from({ length: 5 }, (_, i) => ic('star', i < n ? '' : 'ic-off')).join('');
 
+// ---------- вкладки ----------
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => show(b.dataset.view));
+function show(v) {
+  view = v;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  ['stats', 'staff', 'reviews'].forEach(x => $('#view-' + x).hidden = x !== v);
+  $('#statsCtl').style.display = v === 'stats' ? 'contents' : 'none';
+  load();
+}
 async function load() {
+  try {
+    if (view === 'stats') await loadStats();
+    else if (view === 'staff') await loadStaff();
+    else await loadReviews();
+  } catch (e) { /* нет связи */ }
+}
+
+// ---------- аналитика ----------
+async function loadStats() {
   const q = `days=${$('#days').value}&loc=${$('#loc').value}`;
-  const r = await fetch('/api/admin/stats?' + q, { headers: H() });
+  const r = await A('/api/admin/stats?' + q);
   if (r.status === 401 || r.status === 429) return logout();
-  render(await r.json());
+  renderStats(await r.json());
 }
 function bars(arr, key, label) {
   const max = Math.max(1, ...arr.map(a => a[key]));
   return `<div class="bars">${arr.map(a => `<div style="height:${Math.max(2, a[key] / max * 100)}%" data-t="${esc(label(a))}"></div>`).join('')}</div>`;
 }
-function render(s) {
-  const tt = s.totals, c = s.club;
+function renderStats(s) {
+  const tt = s.totals, c = s.club, rv = s.reviews || { count: 0, avg: 0 };
   const total = tt.online + tt.cash || 1;
   const topMax = Math.max(1, ...s.topItems.map(i => i.qty));
-  $('#main').innerHTML = `
+  $('#view-stats').innerHTML = `
   <div class="kpis">
     <div class="kpi"><span>${t('ad.revenue')}</span><b>${fmt(tt.revenue)}</b><small>${t('ad.revenue.s')}</small></div>
     <div class="kpi"><span>${t('ad.orders')}</span><b>${num(tt.orders)}</b><small>${t('ad.orders.s')}</small></div>
@@ -112,43 +181,123 @@ function render(s) {
     <div class="kpi"><span>${t('ad.clubshare')}</span><b>${tt.orders ? Math.round(tt.members / tt.orders * 100) : 0}%</b><small>${t('ad.clubshare.s', { a: num(tt.members), b: num(tt.orders) })}</small></div>
     <div class="kpi"><span>${t('ad.members')}</span><b>${num(c.totalMembers)}</b><small>${t('ad.members.s', { a: num(c.newMembers), b: num(c.repeatMembers) })}</small></div>
     <div class="kpi"><span>${t('ad.bonus')}</span><b>${num(c.bonusOutstanding)}</b><small>${t('ad.bonus.s', { n: num(tt.cashbackAccrued) })}</small></div>
+    <div class="kpi"><span>${t('ad.rating')}</span><b>${rv.count ? rv.avg.toFixed(1) : '—'}</b><small>${t('ad.rating.s', { n: num(rv.count) })}</small></div>
   </div>
   ${!tt.orders ? `<p class="empty" style="margin-top:20px">${t('ad.none')}</p>` : `
   <div class="grid">
-    <div class="card wide"><h2>${t('ad.byday')}</h2>${bars(s.byDay, 'revenue', d => `${d.date}: ${fmt(d.revenue)}, ${d.orders} ${t('ad.ord')}`)}
+    <div class="card wide"><h2>${t('ad.byday')}</h2>${bars(s.byDay, 'revenue', d => `${d.date}: ${fmt(d.revenue)}, ${d.orders} ${tp('ad.ord')}`)}
       <div class="axis"><span>${s.byDay[0].date}</span><span>${s.byDay[s.byDay.length - 1].date}</span></div></div>
-    <div class="card"><h2>${t('ad.byhour')}</h2>${bars(s.byHour, 'orders', h => `${s.byHour.indexOf(h)}:00, ${h.orders} ${t('ad.ord')}`)}
+    <div class="card"><h2>${t('ad.byhour')}</h2>${bars(s.byHour, 'orders', h => `${s.byHour.indexOf(h)}:00, ${h.orders} ${tp('ad.ord')}`)}
       <div class="axis"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div></div>
     <div class="card"><h2>${t('ad.paytype')}</h2>
       <div class="list"><div class="r"><span>${t('ad.online')}</span><i>${num(tt.online)} · ${Math.round(tt.online / total * 100)}%</i></div><div class="meter"><div style="width:${tt.online / total * 100}%"></div></div>
       <div class="r" style="margin-top:8px"><span>${t('ad.cash')}</span><i>${num(tt.cash)} · ${Math.round(tt.cash / total * 100)}%</i></div><div class="meter"><div style="width:${tt.cash / total * 100}%"></div></div></div></div>
     <div class="card"><h2>${t('ad.top')}</h2><div class="list">${s.topItems.map(i => `<div><div class="r"><span>${esc(itemLabel(i))}</span><i>${num(i.qty)} ${t('ad.pcs')} · ${fmt(i.revenue)}</i></div><div class="meter"><div style="width:${i.qty / topMax * 100}%"></div></div></div>`).join('')}</div></div>
-    <div class="card"><h2>${t('ad.byloc')}</h2><div class="list">${s.byLocation.map(l => `<div class="r"><span>${esc(LOCS[l.id] ? tr(LOCS[l.id], 'address') : l.address)}</span><i>${num(l.orders)} ${t('ad.ord')} · ${fmt(l.revenue)}</i></div>`).join('')}</div></div>
+    <div class="card"><h2>${t('ad.byloc')}</h2><div class="list">${s.byLocation.map(l => `<div class="r"><span>${esc(locName(l.id))}</span><i>${num(l.orders)} ${t('ad.ord')} · ${fmt(l.revenue)}</i></div>`).join('')}</div></div>
+    ${(s.staff && s.staff.length) ? `<div class="card wide"><h2>${t('ad.bybarista')}</h2><div class="list">${s.staff.map(b => `<div class="r"><span>${esc(b.name)}</span><i>${num(b.orders)} ${t('ad.ord')} · ${tp('ad.avgmin', { n: b.avgMin })}</i></div>`).join('')}</div></div>` : ''}
   </div>`}`;
 }
+
+// ---------- сотрудники ----------
+let newPinMsg = '';
+async function loadStaff() {
+  const [sr, shr] = await Promise.all([A('/api/admin/staff'), A('/api/admin/shifts?days=7')]);
+  if (sr.status === 401 || sr.status === 429) return logout();
+  renderStaff(await sr.json(), await shr.json());
+}
+function renderStaff(list, shifts) {
+  $('#view-staff').innerHTML = `
+    ${newPinMsg ? `<div class="pinbox">${newPinMsg}</div>` : ''}
+    <div class="card">
+      <h2>${t('sf.add')}</h2>
+      <form class="addform" id="addForm">
+        <label>${t('sf.name')}<input name="name" maxlength="40" required></label>
+        <label>${t('sf.role')}<select name="role"><option value="barista">${t('sf.barista')}</option><option value="manager">${t('sf.manager')}</option></select></label>
+        <label>${t('sf.pin')}<input name="pin" inputmode="numeric" maxlength="8" autocomplete="off"></label>
+        <button class="btn" type="submit">${ic('users')} ${t('sf.create')}</button>
+      </form>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>${t('sf.title')}</h2>
+      ${list.map(s => `<div class="staff-row">
+        <div class="nm">${esc(s.name)} <span class="badge ${s.role === 'manager' ? 'mgr' : 'off'}">${t('sf.' + s.role)}</span> ${s.active ? '' : `<span class="badge hid">${t('sf.inactive')}</span>`}</div>
+        <div class="meta">${s.onShift ? `<span class="badge on">${t('sf.onshift')}</span> ${esc(locName(s.onShift))}` : `<span class="badge off">${t('sf.offshift')}</span>`}
+          · ${s.lastShift ? `${t('sf.lastshift')}: ${dt(s.lastShift)}` : t('sf.never')} · ${t('sf.handled', { n: s.handled30 })}</div>
+        <button class="btn sec sm" data-act="reset" data-id="${s.id}">${ic('key-round')} ${t('sf.reset')}</button>
+        <button class="btn ${s.active ? 'danger' : 'sec'} sm" data-act="${s.active ? 'off' : 'on'}" data-id="${s.id}">${s.active ? t('sf.deactivate') : t('sf.activate')}</button>
+      </div>`).join('')}
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>${t('sf.shifts')}</h2>
+      ${shifts.length ? `<div class="tw"><table class="t"><thead><tr><th>${t('sf.col.staff')}</th><th>${t('sf.col.loc')}</th><th>${t('sf.col.start')}</th><th>${t('sf.col.end')}</th><th>${t('sf.col.orders')}</th></tr></thead><tbody>
+        ${shifts.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(locName(x.locationId))}</td><td>${dt(x.startedAt)}</td><td>${x.endedAt ? dt(x.endedAt) : `<span class="badge on">${t('sf.ongoing')}</span>`}</td><td>${num(x.orders)}</td></tr>`).join('')}
+      </tbody></table></div>` : `<p class="empty">—</p>`}
+    </div>`;
+  $('#addForm').onsubmit = async e => {
+    e.preventDefault(); const f = e.target;
+    const r = await A('/api/admin/staff', { method: 'POST', body: JSON.stringify({ name: f.name.value, role: f.role.value, pin: f.pin.value }) });
+    const d = await r.json();
+    if (!r.ok) { alert(d.error || 'Error'); return; }
+    newPinMsg = tp('sf.pinis', { name: esc(f.name.value), pin: '@@' + d.pin + '@@' }).replace(/@@(\d+)@@/, '<b>$1</b>');
+    loadStaff();
+  };
+  document.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.id, act = b.dataset.act, row = list.find(x => String(x.id) === id);
+    if (act === 'reset' && !confirm(tp('sf.confirmreset'))) return;
+    const body = act === 'reset' ? { resetPin: true } : { active: act === 'on' };
+    const r = await A('/api/admin/staff/' + id, { method: 'PATCH', body: JSON.stringify(body) });
+    const d = await r.json();
+    if (d.pin) newPinMsg = tp('sf.pinis', { name: esc(row.name), pin: '@@' + d.pin + '@@' }).replace(/@@(\d+)@@/, '<b>$1</b>');
+    loadStaff();
+  });
+}
+
+// ---------- отзывы ----------
+async function loadReviews() {
+  const r = await A('/api/admin/reviews');
+  if (r.status === 401 || r.status === 429) return logout();
+  renderReviews(await r.json());
+}
+function renderReviews(list) {
+  $('#view-reviews').innerHTML = `<div class="card"><h2>${t('rw.title')}</h2>${list.length ? list.map(r => `
+    <div class="rv" data-id="${r.id}">
+      <div class="rv-top"><span class="st">${stars(r.rating)}</span><span>${esc(r.name || '—')}</span><small>${esc(locName(r.locationId))} · ${t('rw.order', { n: r.orderNumber })} · ${dt(r.createdAt)}</small>${r.status === 'hidden' ? `<span class="badge hid">${t('rw.hidden')}</span>` : ''}</div>
+      ${r.text ? `<p>${esc(r.text)}</p>` : ''}
+      <textarea placeholder="${esc(tp('rw.replyph'))}" maxlength="500">${esc(r.reply)}</textarea>
+      <div class="row"><button class="btn sm" data-save>${t('rw.save')}</button>
+      <button class="btn sec sm" data-toggle="${r.status === 'hidden' ? 'published' : 'hidden'}">${ic(r.status === 'hidden' ? 'eye' : 'eye-off')} ${r.status === 'hidden' ? t('rw.show') : t('rw.hide')}</button></div>
+    </div>`).join('') : `<p class="empty">${t('rw.none')}</p>`}</div>`;
+  document.querySelectorAll('.rv').forEach(el => {
+    const id = el.dataset.id;
+    el.querySelector('[data-save]').onclick = async () => { await A('/api/admin/reviews/' + id, { method: 'PATCH', body: JSON.stringify({ reply: el.querySelector('textarea').value }) }); loadReviews(); };
+    el.querySelector('[data-toggle]').onclick = async e => { await A('/api/admin/reviews/' + id, { method: 'PATCH', body: JSON.stringify({ status: e.currentTarget.dataset.toggle }) }); loadReviews(); };
+  });
+}
+
+// ---------- вход ----------
 function logout() { sessionStorage.removeItem('ds_apin'); pin = ''; $('#app').hidden = true; $('#login').hidden = false; }
 async function start() {
   const [locs, menu] = await Promise.all([fetch('/api/locations').then(r => r.json()), fetch('/api/menu').then(r => r.json())]);
   locs.forEach(l => LOCS[l.id] = l);
   menu.categories.forEach(c => c.items.forEach(i => ITEMS[i.id] = i));
-  $('#loc').innerHTML = `<option value="">${t('ad.allloc')}</option>` + locs.map(l => `<option value="${l.id}">${esc(tr(l, 'address'))}</option>`).join('');
+  $('#loc').innerHTML = `<option value="">${tp('ad.allloc')}</option>` + locs.map(l => `<option value="${l.id}">${esc(tr(l, 'address'))}</option>`).join('');
   $('#login').hidden = true; $('#app').hidden = false;
-  await load();
+  show(view);
 }
 $('#days').onchange = $('#loc').onchange = load;
 $('#out').onclick = logout;
 $('#csv').onclick = async e => {
   e.preventDefault();
-  const r = await fetch('/api/admin/orders.csv?days=' + $('#days').value, { headers: H() });
+  const r = await A('/api/admin/orders.csv?days=' + $('#days').value);
   const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'drinkstar-orders.csv'; document.body.appendChild(a); a.click(); a.remove();
 };
 $('#loginForm').onsubmit = async e => {
   e.preventDefault(); pin = $('#pin').value;
-  const r = await fetch('/api/admin/stats?days=1', { headers: H() });
+  const r = await A('/api/admin/stats?days=1');
   if (r.ok) { sessionStorage.setItem('ds_apin', pin); start(); }
-  else { $('#loginErr').textContent = r.status === 429 ? t('ad.toomany') : t('st.badpin'); $('#pin').value = ''; }
+  else { $('#loginErr').textContent = r.status === 429 ? tp('ad.toomany') : tp('st.badpin'); $('#pin').value = ''; }
 };
-if (pin) fetch('/api/admin/stats?days=1', { headers: H() }).then(r => r.ok ? start() : logout());
+if (pin) A('/api/admin/stats?days=1').then(r => r.ok ? start() : logout());
 </script>
 </body>
 </html>

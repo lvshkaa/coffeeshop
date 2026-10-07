@@ -14,7 +14,7 @@ services:
     #   sizeGB: 1
     envVars:
       - key: STAFF_PIN
-        sync: false          # введите свой PIN для бариста в панели Render (не 1234)
+        sync: false          # PIN менеджера для первого входа (не 1234). Бариста с личными PIN владелец заводит в аналитике
       - key: ADMIN_PIN
         sync: false          # введите свой PIN для владельца (не 0000 и не такой же, как STAFF_PIN)
       - key: PAYMENT_PROVIDER

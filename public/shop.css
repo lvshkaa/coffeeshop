@@ -173,7 +173,8 @@ button,.btn,.add,.chip,.tab{-webkit-tap-highlight-color:transparent;touch-action
   #myorder::before{content:"№";font-size:.9rem;font-weight:800;display:inline-grid;place-items:center;width:30px;height:30px;border:1.5px solid var(--caramel);border-radius:50%}
 }
 @media(max-width:360px){.lang button{padding:7px 5px}.cart-btn #cartCount{display:none}}
-@media(max-width:400px){.cart-btn>span[data-i18n]{font-size:0}.cart-btn>span[data-i18n]::before{content:"🛒";font-size:1.05rem}}
+.cart-ic{display:inline-flex}.cart-ic .ic{width:1.2em;height:1.2em}
+@media(max-width:400px){.cart-btn>span[data-i18n]{display:none}}
 /* плашка только у счётчика, а не у слова «Корзина» */
 .cart-btn>span[data-i18n]{background:none;color:inherit;min-width:0;height:auto;padding:0;border-radius:0;display:inline}
 
@@ -186,3 +187,30 @@ button,.btn,.add,.chip,.tab{-webkit-tap-highlight-color:transparent;touch-action
 .legal a{color:var(--caramel-2)}
 .legal a:hover{color:var(--cream)}
 .company{margin-top:12px;font-size:.78rem;opacity:.75;line-height:1.5}
+
+/* отзывы */
+#reviews{background:var(--cream-2)}
+.rv-summary{display:flex;gap:34px;align-items:center;flex-wrap:wrap;margin:30px 0 24px}
+.rv-avg{text-align:center}
+.rv-avg b{display:block;font-family:var(--serif);font-size:3.6rem;line-height:1}
+.rv-avg small{color:var(--muted);font-weight:600;font-size:.85rem}
+.rv-stars{display:inline-flex;gap:2px;color:var(--caramel)}
+.rv-stars .ic{width:20px;height:20px}
+.rv-bars{flex:1;min-width:220px;max-width:420px;display:grid;gap:6px}
+.rv-bar{display:grid;grid-template-columns:14px 1fr 28px;gap:10px;align-items:center;font-size:.8rem;font-weight:700;color:var(--brown)}
+.rv-bar div{height:8px;background:var(--paper);border-radius:99px;overflow:hidden}
+.rv-bar i{display:block;height:100%;background:var(--caramel);border-radius:99px}
+.rv-bar em{font-style:normal;color:var(--muted);text-align:right}
+.rv-empty{color:var(--muted);font-weight:600}
+.rv-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.rv-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.rv-head{display:flex;justify-content:space-between;align-items:center}
+.rv-head small{color:var(--muted);font-weight:600;font-size:.78rem}
+.rv-card p{font-size:.95rem;line-height:1.55;color:#4a3a2c;margin:0}
+.rv-by{font-size:.82rem;color:var(--muted);font-weight:600;margin-top:auto}
+.rv-by b{color:var(--espresso)}
+.rv-reply{background:#fff3df;border-radius:12px;padding:10px 12px;font-size:.85rem;line-height:1.5}
+.rv-reply b{display:block;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--caramel);margin-bottom:3px}
+.rv-more{margin-top:22px;text-align:center}
+@media(max-width:900px){.rv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.rv-grid{grid-template-columns:minmax(0,1fr)}}

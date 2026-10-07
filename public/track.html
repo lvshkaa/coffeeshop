@@ -41,11 +41,35 @@ body{font-family:var(--sans);background:radial-gradient(800px 500px at 80% 0,#f0
 .lang{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;overflow:hidden;background:var(--paper);margin-bottom:18px}
 .lang button{border:none;background:none;font:inherit;font-weight:800;font-size:.72rem;padding:7px 10px;color:var(--muted);cursor:pointer}
 .lang button.on{background:var(--espresso);color:var(--cream)}
+.sndbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;padding:12px;border-radius:14px;border:1.5px solid var(--line);background:var(--cream);color:var(--brown);font:inherit;font-weight:700;font-size:.9rem;cursor:pointer}
+.sndbtn.on{background:#fff3df;border-color:var(--caramel-2);color:#8a5a14}
+.sndbtn.tap{background:#fde8d6;border-color:#e0a37a;color:#9a4a22;animation:pulse2 1.6s infinite}
+@keyframes pulse2{50%{box-shadow:0 0 0 6px rgba(217,85,43,.12)}}
+.sndhint{font-size:.76rem;color:var(--muted);margin-top:6px}
+.review{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line);text-align:left}
+.review h3{font-family:var(--serif);font-size:1.15rem;text-align:center}
+.review .sub{text-align:center;color:var(--muted);font-size:.85rem;margin-top:2px}
+.rate{display:flex;justify-content:center;gap:4px;margin:14px 0 6px}
+.rate button{background:none;border:none;color:var(--caramel-2);cursor:pointer;padding:4px;line-height:0;-webkit-tap-highlight-color:transparent}
+.rate .ic{width:36px;height:36px}
+.review textarea{width:100%;font:inherit;font-size:16px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--cream);color:var(--espresso);min-height:84px;resize:vertical}
+.review .note{font-size:.76rem;color:var(--muted);margin:6px 0 10px}
+.review .send{width:100%;padding:14px;border-radius:999px;border:none;background:var(--espresso);color:var(--cream);font:inherit;font-weight:800;cursor:pointer}
+.review .send[disabled]{opacity:.5}
+.review .err{color:#9a4a22;font-weight:700;font-size:.85rem;min-height:1.2em;margin-top:6px;text-align:center}
+.mine{display:flex;justify-content:center;gap:2px;color:var(--caramel-2);margin:8px 0}
+.mine .ic{width:22px;height:22px}
+.review blockquote{background:var(--cream);border-radius:12px;padding:12px 14px;font-size:.9rem;margin-top:8px}
+.review .reply{margin-top:10px;background:#fff3df;border-radius:12px;padding:12px 14px;font-size:.88rem}
+.review .reply b{display:block;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--caramel);margin-bottom:4px}
+.thanks{text-align:center;font-weight:800;color:#40691f;margin-top:10px}
 </style>
 </head>
 <body>
-<div class="card" id="card"><div class="lang"></div><a class="brand" href="/">★ DrinkStar</a><div id="out" data-i18n="tr.loading">Загружаем…</div></div>
+<div class="card" id="card"><div class="lang"></div><a class="brand" href="/"><span data-ic="star"></span> DrinkStar</a><div id="out" data-i18n="tr.loading">Загружаем…</div></div>
+<script src="icons.js"></script>
 <script src="i18n.js"></script>
+<script src="sound.js"></script>
 <script>
 const { LANG, LOCALE } = window.I18N;
 const token = new URLSearchParams(location.search).get('t');
@@ -54,16 +78,72 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const STEPS = ['new', 'preparing', 'ready', 'done'];
 let prev, timer, MENU_ITEMS = {}, ADDONS = {};
 const out = document.getElementById('out');
+const sndOn = () => { try { return localStorage.getItem('ds_csnd') !== 'off'; } catch { return true; } };
+let repeatTimer = null, pickedRating = 0, tokenGlobal = token;
 
+// когда заказ готов: сигнал, голос, вибрация; сигнал повторяется до трёх раз, пока клиент не коснётся экрана
+function announceReady(o) {
+  if (!sndOn()) return;
+  DSSound.play('ready');
+  setTimeout(() => DSSound.speak(tp('snd.readyself', { n: o.number }), LANG), 1300);
+  let n = 0;
+  clearInterval(repeatTimer);
+  repeatTimer = setInterval(() => { if (++n > 3) return clearInterval(repeatTimer); DSSound.play('ready'); }, 20000);
+  const stop = () => { clearInterval(repeatTimer); document.removeEventListener('pointerdown', stop); };
+  document.addEventListener('pointerdown', stop);
+}
+
+function wireExtras(o) {
+  const b = document.getElementById('sndBtn');
+  if (b) b.onclick = async () => {
+    const wasRunning = DSSound.running();
+    await DSSound.unlock();
+    // звук включён, но браузер ещё не разрешил его: первое касание только «будит» звук
+    if (sndOn() && !wasRunning) { DSSound.play('ok'); render(o); return; }
+    try { localStorage.setItem('ds_csnd', sndOn() ? 'off' : 'on'); } catch { /* ignore */ }
+    if (sndOn()) DSSound.play('ok');
+    render(o);
+  };
+  const form = document.getElementById('rvForm');
+  if (form) {
+    const paint = () => form.querySelectorAll('.rate button').forEach(x => { x.innerHTML = ic('star', +x.dataset.v <= pickedRating ? '' : 'ic-off'); });
+    paint();
+    form.querySelectorAll('.rate button').forEach(x => x.onclick = () => { pickedRating = +x.dataset.v; paint(); });
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const err = form.querySelector('.err');
+      if (!pickedRating) { err.textContent = tp('rv.pickrating'); return; }
+      const btn = form.querySelector('.send'); btn.disabled = true;
+      try {
+        const r = await fetch('/api/orders/' + tokenGlobal + '/review', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: JSON.stringify({ rating: pickedRating, text: form.text.value }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || 'Error');
+        load();
+      } catch (ex) { err.textContent = ex.message; btn.disabled = false; }
+    };
+  }
+}
+
+let lastOrder = null;
 function render(o) {
+  lastOrder = o;
   const idx = STEPS.indexOf(o.status);
-  const steps = STEPS.map((s, i) => `<div class="step ${i < idx || o.status === 'done' ? 'done' : i === idx ? 'now' : ''}"><div class="dot">${i < idx || o.status === 'done' ? '✓' : i + 1}</div>${t('tr.s' + (i + 1))}</div>`).join('');
+  const steps = STEPS.map((s, i) => `<div class="step ${i < idx || o.status === 'done' ? 'done' : i === idx ? 'now' : ''}"><div class="dot">${i < idx || o.status === 'done' ? ic('check') : i + 1}</div>${t('tr.s' + (i + 1))}</div>`).join('');
   const lines = o.items.map(i => {
     const name = MENU_ITEMS[i.id] ? tr(MENU_ITEMS[i.id], 'name') : i.name;
     const adds = (i.addonIds || []).map(id => ADDONS[id] ? tr(ADDONS[id], 'name') : id);
     return `<div class="row"><span>${i.qty} × ${esc(name)} ${esc(I18N.num(i.variant))}${adds.length ? `<small>${adds.map(esc).join(', ')}</small>` : ''}</span><span>${fmt(i.unit * i.qty)}</span></div>`;
   }).join('');
   const open = o.status !== 'cancelled' && o.status !== 'awaiting_payment';
+  const live = ['new', 'preparing', 'ready'].includes(o.status);
+  const needTap = sndOn() && !DSSound.running();
+  const sndBlock = live ? `<button class="sndbtn ${sndOn() ? (needTap ? 'tap' : 'on') : ''}" id="sndBtn" type="button">${ic(sndOn() ? 'bell' : 'bell-off')} <span>${sndOn() ? (needTap ? t('tr.sound.tap') : t('tr.sound.on')) : t('tr.sound.off')}</span></button><div class="sndhint">${t('tr.sound.hint')}</div>` : '';
+  let reviewBlock = '';
+  if (o.status === 'done' && o.review) {
+    reviewBlock = `<div class="review"><h3>${t('rv.yours')}</h3><div class="mine">${[1, 2, 3, 4, 5].map(i => ic('star', i <= o.review.rating ? '' : 'ic-off')).join('')}</div>${o.review.text ? `<blockquote>${esc(o.review.text)}</blockquote>` : ''}${o.review.reply ? `<div class="reply"><b>${t('rv.reply')}</b>${esc(o.review.reply)}</div>` : ''}<div class="thanks">${t('rv.thanks')}</div></div>`;
+  } else if (o.status === 'done' && o.canReview) {
+    reviewBlock = `<form class="review" id="rvForm"><h3>${t('rv.title')}</h3><div class="sub">${t('rv.sub')}</div><div class="rate">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-v="${i}" aria-label="${i}"></button>`).join('')}</div><textarea name="text" maxlength="500" placeholder="${esc(tp('rv.placeholder'))}"></textarea><div class="note">${t('rv.nameNote')}</div><button class="send" type="submit">${t('rv.send')}</button><div class="err"></div></form>`;
+  }
   out.innerHTML = `
     <div class="eyebrow">${t('tr.order')}</div><div class="num">№${o.number}</div><div class="where">${esc(o.location || '')}</div>
     <div class="status">${t('tr.t.' + o.status)}</div><div class="hint">${t('tr.h.' + o.status)}</div>
@@ -71,13 +151,16 @@ function render(o) {
     ${o.status === 'awaiting_payment' && o.payUrl ? `<a class="paybtn" href="${esc(o.payUrl)}">${t('tr.pay', { sum: fmt(o.payable) })}</a>` : ''}
     ${o.paid ? `<div class="paidtag">${t('tr.paidonline')}</div>` : (open && o.status !== 'done' ? `<div class="paidtag cash">${t('tr.paycash')}</div>` : '')}
     ${o.status === 'ready' ? `<div class="ready">${t('tr.say', { n: o.number })}</div>` : ''}
+    ${sndBlock}
     <div class="list">${lines}
       ${o.bonusUsed ? `<div class="row"><span>${t('cart.sum')}</span><span>${fmt(o.total)}</span></div><div class="row" style="color:#40691f"><span>${t('tr.bonuspaid')}</span><span>−${fmt(o.bonusUsed)}</span></div>` : ''}
       <div class="row sum"><span>${o.bonusUsed ? t('cart.topay') : t('cart.total')}</span><span>${fmt(o.payable)}</span></div>
       ${o.cashbackDone ? `<div class="bonus-tag">${t('tr.bonusdone')}</div>` : (o.member && o.cashback ? `<div class="bonus-tag">${t('tr.bonussoon', { n: o.cashback })}</div>` : '')}
     </div>
+    ${reviewBlock}
     <a class="back" href="/">${t('tr.home')}</a>`;
-  if (prev && prev !== 'ready' && o.status === 'ready') { navigator.vibrate?.([200, 100, 200]); document.title = t('tr.ready.title'); }
+  wireExtras(o);
+  if (prev && prev !== 'ready' && o.status === 'ready') { navigator.vibrate?.([200, 100, 200]); document.title = tp('tr.ready.title'); announceReady(o); }
   prev = o.status;
   if (o.status === 'done' || o.status === 'cancelled') clearInterval(timer);
 }
