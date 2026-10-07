@@ -109,6 +109,7 @@ function renderStaff(list, shifts) {
       <form class="addform" id="addForm">
         <label>${t('sf.name')}<input name="name" maxlength="40" required></label>
         <label>${t('sf.role')}<select name="role"><option value="barista">${t('sf.barista')}</option><option value="manager">${t('sf.manager')}</option></select></label>
+        <label>${t('sf.home')}<select name="loc"><option value="">${t('sf.nohome')}</option>${Object.values(LOCS).map(l => `<option value="${l.id}">${esc(tr(l, 'address'))}</option>`).join('')}</select></label>
         <label>${t('sf.pin')}<input name="pin" inputmode="numeric" maxlength="8" autocomplete="off"></label>
         <button class="btn" type="submit">${ic('users')} ${t('sf.create')}</button>
       </form>
@@ -119,6 +120,7 @@ function renderStaff(list, shifts) {
         <div class="nm">${esc(s.name)} <span class="badge ${s.role === 'manager' ? 'mgr' : 'off'}">${t('sf.' + s.role)}</span> ${s.active ? '' : `<span class="badge hid">${t('sf.inactive')}</span>`}</div>
         <div class="meta">${s.onShift ? `<span class="badge on">${t('sf.onshift')}</span> ${esc(locName(s.onShift))}` : `<span class="badge off">${t('sf.offshift')}</span>`}
           · ${s.lastShift ? `${t('sf.lastshift')}: ${dt(s.lastShift)}` : t('sf.never')} · ${t('sf.handled', { n: s.handled30 })}</div>
+        <select class="homesel" data-home="${s.id}" aria-label="${esc(tp('sf.home'))}"><option value="">${t('sf.nohome')}</option>${Object.values(LOCS).map(l => `<option value="${l.id}"${s.locationId === l.id ? ' selected' : ''}>${esc(tr(l, 'address'))}</option>`).join('')}</select>
         <button class="btn sec sm" data-act="reset" data-id="${s.id}">${ic('key-round')} ${t('sf.reset')}</button>
         <button class="btn ${s.active ? 'danger' : 'sec'} sm" data-act="${s.active ? 'off' : 'on'}" data-id="${s.id}">${s.active ? t('sf.deactivate') : t('sf.activate')}</button>
       </div>`).join('')}
@@ -131,12 +133,17 @@ function renderStaff(list, shifts) {
     </div>`;
   $('#addForm').onsubmit = async e => {
     e.preventDefault(); const f = e.target;
-    const r = await A('/api/admin/staff', { method: 'POST', body: JSON.stringify({ name: f.name.value, role: f.role.value, pin: f.pin.value }) });
+    const r = await A('/api/admin/staff', { method: 'POST', body: JSON.stringify({ name: f.name.value, role: f.role.value, locationId: f.loc.value, pin: f.pin.value }) });
     const d = await r.json();
     if (!r.ok) { alert(d.error || 'Error'); return; }
     newPinMsg = tp('sf.pinis', { name: esc(f.name.value), pin: '@@' + d.pin + '@@' }).replace(/@@(\d+)@@/, '<b>$1</b>');
     loadStaff();
   };
+  document.querySelectorAll('[data-home]').forEach(sel => sel.onchange = async () => {
+    await A('/api/admin/staff/' + sel.dataset.home, { method: 'PATCH', body: JSON.stringify({ locationId: sel.value }) });
+    newPinMsg = esc(tp('sf.moved'));
+    loadStaff();
+  });
   document.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
     const id = b.dataset.id, act = b.dataset.act, row = list.find(x => String(x.id) === id);
     if (act === 'reset' && !confirm(tp('sf.confirmreset'))) return;

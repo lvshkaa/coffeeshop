@@ -645,7 +645,7 @@ async function api(req, res, url) {
     const pin = String(body.pin || '').trim();
     const row = (pin.length >= 4 && pin.length <= 32) ? P('SELECT * FROM staff WHERE pin_hash = ? AND active = 1').get(hashPin(pin)) : null;
     if (!row) { limits.fail(ipKey, 300e3); limits.fail('stafflogin:*', 900e3); audit('staff?', 'staff.login.fail', '', req); return send(401, { error: 'Неверный PIN' }); }
-    const locId = String(body.locationId || '');
+    const locId = (row.role === 'barista' && row.location_id && locById.has(row.location_id)) ? row.location_id : String(body.locationId || '');
     if (!(locById.has(locId) || (row.role === 'manager' && locId === 'all'))) return send(400, { error: 'Выберите кофейню' });
     const token = crypto.randomBytes(24).toString('hex');
     const now = Date.now();
@@ -729,19 +729,20 @@ async function api(req, res, url) {
           (SELECT sh.location_id FROM shifts sh WHERE sh.staff_id = s.id AND sh.ended_at IS NULL AND sh.started_at > ? ORDER BY sh.started_at DESC LIMIT 1) AS on_shift,
           (SELECT COUNT(*) FROM orders o WHERE o.ready_by = s.id AND o.created_at >= ?) AS handled
           FROM staff s ORDER BY s.active DESC, s.name`).all(live, since);
-      return send(200, rows.map(r => ({ id: r.id, name: r.name, role: r.role, active: !!r.active, lastShift: r.last_shift, onShift: r.on_shift, handled30: r.handled })));
+      return send(200, rows.map(r => ({ id: r.id, name: r.name, role: r.role, locationId: r.location_id || '', active: !!r.active, lastShift: r.last_shift, onShift: r.on_shift, handled30: r.handled })));
     }
     if (req.method === 'POST' && p === '/api/admin/staff') {
       const body = await readBody(req);
       const name = clean(body.name, 40);
       if (!name) return send(400, { error: 'Укажите имя' });
       const role = body.role === 'manager' ? 'manager' : 'barista';
+      const home = locById.has(body.locationId) ? body.locationId : null;
       let pin = String(body.pin || '').trim();
       if (pin) {
         if (!/^\d{6,8}$/.test(pin)) return send(400, { error: 'PIN: от 6 до 8 цифр' });
         if (P('SELECT 1 FROM staff WHERE pin_hash = ?').get(hashPin(pin))) return send(409, { error: 'Такой PIN уже занят, выберите другой' });
       } else pin = randomPin();
-      const id = P('INSERT INTO staff (name, pin_hash, role, active, created_at) VALUES (?,?,?,?,?)').run(name, hashPin(pin), role, 1, Date.now()).lastInsertRowid;
+      const id = P('INSERT INTO staff (name, pin_hash, role, active, created_at, location_id) VALUES (?,?,?,?,?,?)').run(name, hashPin(pin), role, 1, Date.now(), home).lastInsertRowid;
       audit('admin', 'staff.create', `${name} (${role})`, req);
       return send(201, { id, pin });
     }
@@ -753,6 +754,13 @@ async function api(req, res, url) {
       let newPin;
       tx(db, () => {
         if (typeof body.name === 'string' && clean(body.name, 40)) P('UPDATE staff SET name = ? WHERE id = ?').run(clean(body.name, 40), row.id);
+        if (typeof body.locationId === 'string') {
+          const home = locById.has(body.locationId) ? body.locationId : null;
+          P('UPDATE staff SET location_id = ? WHERE id = ?').run(home, row.id);
+          // действующая смена уходит, чтобы бариста вошёл уже на новой точке
+          P('DELETE FROM staff_sessions WHERE staff_id = ?').run(row.id);
+          P('UPDATE shifts SET ended_at = ? WHERE staff_id = ? AND ended_at IS NULL').run(Date.now(), row.id);
+        }
         if (body.role === 'barista' || body.role === 'manager') P('UPDATE staff SET role = ? WHERE id = ?').run(body.role, row.id);
         if (typeof body.active === 'boolean') {
           P('UPDATE staff SET active = ? WHERE id = ?').run(body.active ? 1 : 0, row.id);

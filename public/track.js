@@ -14,8 +14,8 @@ const CLIP_LANGS = ['ru', 'kk', 'en']; // записан только русск
 if (CLIP_LANGS.includes(LANG)) DSSound.preload('ready-ru', '/audio/ready-ru.mp3');
 function playReady(o) {
   if (CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru')) return;
-  DSSound.play('ready');
-  setTimeout(() => DSSound.speak(tp('snd.readyself', { n: o.number }), LANG), 1300);
+  // запись ещё не готова или звук не разблокирован: играем тот же человеческий mp3 обычным плеером, синтез речи не используем
+  try { const au = new Audio('/audio/ready-ru.mp3'); au.play().catch(() => DSSound.play('ready')); } catch { DSSound.play('ready'); }
 }
 function announceReady(o) {
   if (!sndOn()) return;

@@ -228,3 +228,10 @@ button,.btn,.add,.chip,.tab{-webkit-tap-highlight-color:transparent;touch-action
 @media (max-width:820px){.cartbar:not([hidden]){display:inline-flex}body.has-cartbar{padding-bottom:84px}}
 .eta{display:inline-block;margin-top:8px;font-weight:800;color:var(--caramel)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* казахский текст длиннее: сжимаем меню, чтобы корзина не уходила за край */
+html[lang="kk"] .nav ul{gap:16px;font-size:.84rem}
+html[lang="kk"] .nav-actions{gap:8px}
+html[lang="kk"] .myorder{font-size:.82rem}
+.nav-actions>*{flex-shrink:0}.nav ul{min-width:0}
+@media(max-width:1500px){html[lang="kk"] .nav ul{display:none}html[lang="kk"] .nav-actions{margin-left:auto}}
+html[lang="kk"] #hdr .wrap{max-width:1400px}

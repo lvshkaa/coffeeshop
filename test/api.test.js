@@ -146,3 +146,22 @@ describe('меню владельца', () => {
     } finally { s.stop(); }
   });
 });
+
+describe('точка бариста', () => {
+  test('бариста с закреплённой точкой входит только на неё; смена точки сбрасывает вход', async () => {
+    const s = await startServer();
+    try {
+      const A = await adminHeaders(s.call);
+      const c = await s.call('POST', '/api/admin/staff', { name: 'Аян', role: 'barista', locationId: 'turan50' }, A);
+      assert.equal(c.status, 201);
+      const L = await s.call('POST', '/api/staff/login', { pin: c.json.pin, locationId: 'alfarabi5' });
+      assert.equal(L.json.shift.locationId, 'turan50');
+      const mv = await s.call('PATCH', '/api/admin/staff/' + c.json.id, { locationId: 'konaev12' }, A);
+      assert.equal(mv.status, 200);
+      const old = await s.call('GET', '/api/staff/me', undefined, { 'x-staff-token': L.json.token });
+      assert.equal(old.status, 401);
+      const L2 = await s.call('POST', '/api/staff/login', { pin: c.json.pin, locationId: 'turan50' });
+      assert.equal(L2.json.shift.locationId, 'konaev12');
+    } finally { s.stop(); }
+  });
+});
