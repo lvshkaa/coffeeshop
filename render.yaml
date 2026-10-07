@@ -8,6 +8,7 @@ services:
     name: drinkstar-demo
     runtime: docker
     plan: free
+    healthCheckPath: /healthz
     # disk:
     #   name: orders
     #   mountPath: /data
@@ -21,5 +22,7 @@ services:
         value: mock          # демо-оплата. На боевом: имя провайдера, например kaspi, или none
       - key: SMS_PROVIDER
         value: demo          # демо: код входа показывается на странице. На боевом: имя провайдера
+      - key: ALLOW_DEMO
+        value: "1"           # разрешает демо-оплату и демо-SMS для показа клиенту. На боевом УДАЛИТЕ эту строку
       - key: BASE_URL
         sync: false          # адрес сайта, который выдаст Render, потом ваш домен (можно оставить пустым)

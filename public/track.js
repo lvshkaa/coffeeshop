@@ -81,6 +81,7 @@ function render(o) {
   out.innerHTML = `
     <div class="eyebrow">${t('tr.order')}</div><div class="num">№${o.number}</div><div class="where">${esc(o.location || '')}</div>
     <div class="status">${t('tr.t.' + o.status)}</div><div class="hint">${t('tr.h.' + o.status)}</div>
+    ${o.etaMin ? `<div class="eta">${t('tr.eta', { n: o.etaMin })}</div>` : ''}
     ${open ? `<div class="steps">${steps}</div>` : ''}
     ${o.status === 'awaiting_payment' && o.payUrl ? `<a class="paybtn" href="${esc(o.payUrl)}">${t('tr.pay', { sum: fmt(o.payable) })}</a>` : ''}
     ${o.paid ? `<div class="paidtag">${t('tr.paidonline')}</div>` : (open && o.status !== 'done' ? `<div class="paidtag cash">${t('tr.paycash')}</div>` : '')}
@@ -92,7 +93,15 @@ function render(o) {
       ${o.cashbackDone ? `<div class="bonus-tag">${t('tr.bonusdone')}</div>` : (o.member && o.cashback ? `<div class="bonus-tag">${t('tr.bonussoon', { n: o.cashback })}</div>` : '')}
     </div>
     ${reviewBlock}
+    ${o.status === 'done' || o.status === 'cancelled' ? `<button class="send" id="again" type="button">${t('tr.again')}</button>` : ''}
     <a class="back" href="/">${t('tr.home')}</a>`;
+  const again = document.getElementById('again');
+  if (again) again.onclick = () => {
+    try {
+      localStorage.setItem('ds_cart', JSON.stringify(o.items.map(i => ({ id: i.id, v: i.v | 0, qty: i.qty, addons: i.addonIds || [] }))));
+    } catch { /* приватный режим */ }
+    location.href = '/#menu';
+  };
   wireExtras(o);
   if (prev && prev !== 'ready' && o.status === 'ready') { navigator.vibrate?.([200, 100, 200]); document.title = tp('tr.ready.title'); announceReady(o); }
   prev = o.status;

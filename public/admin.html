@@ -46,6 +46,19 @@ main{max-width:1100px;margin:0 auto;padding:22px max(22px,env(safe-area-inset-ri
 .meter{height:10px;background:var(--cream-2);border-radius:99px;overflow:hidden;margin-top:6px}
 .meter div{height:100%;background:var(--caramel)}
 .empty{color:var(--muted);font-size:.9rem}
+.delta{font-weight:800;font-size:.78rem;margin-left:6px}.delta.up{color:#3f7a3a}.delta.down{color:var(--red)}
+.insights{display:grid;gap:10px}.ins{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--cream-2);font-weight:600;font-size:.92rem;line-height:1.4;border-left:4px solid var(--caramel)}
+.ins.warn{border-left-color:var(--red);background:#f8e8df}.ins.good{border-left-color:#3f7a3a;background:#e6f0df}
+.heat{display:grid;grid-template-columns:34px repeat(24,minmax(0,1fr));gap:2px;font-size:.62rem;color:var(--muted);font-weight:700}
+.heat i{font-style:normal;display:flex;align-items:center}.heat u{text-decoration:none;aspect-ratio:1/1;border-radius:3px;background:var(--caramel);min-height:10px}
+.heat .hh{text-align:center;display:block}
+.mrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px dashed var(--line)}.mrow:last-child{border:0}
+.mrow .nm{flex:1 1 180px;font-weight:700}.mrow .nm small{display:block;color:var(--muted);font-weight:500}
+.mrow input{font:inherit;font-size:16px;width:96px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--cream);color:var(--espresso)}
+.mrow input.mod{border-color:var(--caramel)}
+.warnbox{background:#fff3d6;border:1.5px solid #e8c777;color:#7a4a00;border-radius:14px;padding:12px 14px;font-weight:700;font-size:.9rem;margin-bottom:8px}
+.okbox{background:#e6f0df;border:1.5px solid #b7d3a8;color:#2f5a2a;border-radius:14px;padding:12px 14px;font-weight:700;font-size:.9rem}
+.logrow{font-size:.82rem;padding:6px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px;flex-wrap:wrap}.logrow b{min-width:120px}.logrow span{color:var(--muted)}
 /* сотрудники */
 .pinbox{background:#fff3d6;border:1.5px solid #e8c777;color:#7a4a00;border-radius:14px;padding:14px 16px;font-weight:700;margin-bottom:16px;font-size:.95rem}
 .pinbox b{font-family:var(--serif);font-size:1.5rem;letter-spacing:.2em}
@@ -115,11 +128,15 @@ table.t td{padding:9px 6px;border-bottom:1px dashed var(--line);font-weight:600}
     <button data-view="stats" class="on"><span data-ic="clock"></span> <span data-i18n="ad.tab.stats">Аналитика</span></button>
     <button data-view="staff"><span data-ic="users"></span> <span data-i18n="ad.tab.staff">Сотрудники</span></button>
     <button data-view="reviews"><span data-ic="message-circle"></span> <span data-i18n="ad.tab.reviews">Отзывы</span></button>
+    <button data-view="menu"><span data-ic="coffee"></span> <span data-i18n="ad.tab.menu">Меню и цены</span></button>
+    <button data-view="sys"><span data-ic="check"></span> <span data-i18n="ad.tab.sys">Система</span></button>
   </div>
   <main>
     <div id="view-stats"></div>
     <div id="view-staff" hidden></div>
     <div id="view-reviews" hidden></div>
+    <div id="view-menu" hidden></div>
+    <div id="view-sys" hidden></div>
   </main>
 </div>
 

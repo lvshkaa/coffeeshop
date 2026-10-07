@@ -1,0 +1,9 @@
+node_modules
+.git
+.claude
+.verify-data
+test
+*.zip
+data/drinkstar.db*
+data/orders.json
+.env

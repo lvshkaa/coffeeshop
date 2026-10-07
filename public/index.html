@@ -6,6 +6,14 @@
 <title>DrinkStar Coffee&more — Pause the world</title>
 <meta name="description" content="DrinkStar Coffee&more — кофейня в Астане. 8 точек, авторский кофе, чай и лимонады. Мир подождёт.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="{{BASE}}/">
+<link rel="alternate" hreflang="ru" href="{{BASE}}/">
+<link rel="alternate" hreflang="kk" href="{{BASE}}/?lang=kk">
+<link rel="alternate" hreflang="en" href="{{BASE}}/?lang=en">
+<meta property="og:url" content="{{BASE}}/">
+<meta property="og:image" content="{{BASE}}/img/fall-apple.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{{JSONLD}}</script>
 <meta name="theme-color" content="#3a2a1e">
 <meta property="og:title" content="DrinkStar Coffee&more — Pause the world">
 <meta property="og:description" content="Кофейня в Астане: 8 точек, авторский кофе, онлайн-заказ с самовывозом.">
@@ -148,6 +156,7 @@ footer a:hover{color:var(--caramel-2)}
 <style>section[id],main{scroll-margin-top:68px}</style>
 </head>
 <body>
+<a class="skip" href="#top" data-i18n="nav.skip">К содержимому</a>
 
 <header id="hdr">
   <div class="wrap nav">
@@ -301,6 +310,7 @@ footer a:hover{color:var(--caramel-2)}
   <div class="drawer-head"><h3 data-i18n="cart.title">Ваш заказ</h3><button class="x" id="closeCart" data-i18n-aria="nav.close"><span data-ic="x"></span></button></div>
   <div class="drawer-body" id="cartBody"></div>
 </aside>
+<button class="cartbar" id="cartBar" type="button" hidden data-i18n-aria="cart.bar"><span class="cart-ic" data-ic="shopping-cart"></span><span data-i18n="nav.cart">Корзина</span> <b id="cbCount">0</b><b id="cbSum" class="cbsum"></b></button>
 <div class="toast" id="toast"></div>
 <script src="/index-nav.js"></script>
 <script src="icons.js"></script>

@@ -827,7 +827,8 @@ async function api(req, res, url) {
       let dbSize = 0; try { dbSize = fs.statSync(path.join(DATA_DIR, 'drinkstar.db')).size; } catch { /* нет файла */ }
       return send(200, { uptimeSec: Math.round((Date.now() - STARTED) / 1000), dbSizeKb: Math.round(dbSize / 1024), orders: P('SELECT COUNT(*) n FROM orders').get().n,
         customers: P('SELECT COUNT(*) n FROM customers').get().n, lastBackup: lastBackup(), node: process.version, warnings,
-        payment: provider ? provider.name : 'none', sms: smsAllowed ? sms.name : 'blocked' });
+        payment: provider ? provider.name : 'none', sms: smsAllowed ? sms.name : 'blocked',
+        net: { ip: clientIp(req), peer: req.socket.remoteAddress, xff: String(req.headers['x-forwarded-for'] || '') } });
     }
     if (req.method === 'GET' && p === '/api/admin/backup') {
       const tmp = path.join(BACKUP_DIR, 'download-' + crypto.randomBytes(4).toString('hex') + '.db');

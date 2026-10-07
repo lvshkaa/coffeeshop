@@ -17,7 +17,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => show(b.
 function show(v) {
   view = v;
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
-  ['stats', 'staff', 'reviews'].forEach(x => $('#view-' + x).hidden = x !== v);
+  ['stats', 'staff', 'reviews', 'menu', 'sys'].forEach(x => $('#view-' + x).hidden = x !== v);
   $('#statsCtl').style.display = v === 'stats' ? 'contents' : 'none';
   load();
 }
@@ -25,7 +25,9 @@ async function load() {
   try {
     if (view === 'stats') await loadStats();
     else if (view === 'staff') await loadStaff();
-    else await loadReviews();
+    else if (view === 'reviews') await loadReviews();
+    else if (view === 'menu') await loadMenu();
+    else await loadSys();
   } catch (e) { /* нет связи */ }
 }
 
@@ -40,32 +42,54 @@ function bars(arr, key, label) {
   const max = Math.max(1, ...arr.map(a => a[key]));
   return `<div class="bars">${arr.map(a => `<div style="height:${Math.max(2, a[key] / max * 100)}%" data-t="${esc(label(a))}"></div>`).join('')}</div>`;
 }
+const wd = i => new Date(2024, 0, 1 + i).toLocaleDateString(LOCALE, { weekday: 'short' });
+const delta = d => d === null || d === undefined ? '' : `<span class="delta ${d >= 0 ? 'up' : 'down'}" title="${esc(tp('ad.vsprev'))}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d)}%</span>`;
+function insightText(i) {
+  const v = { ...i.v };
+  if (i.k === 'locLag') v.name = locName(v.id);
+  if (i.k === 'weekday') { v.best = wd(v.best); v.worst = wd(v.worst); }
+  if (i.k === 'amount' || v.amount !== undefined) v.amount = num(v.amount);
+  return tp('in.' + i.k, v);
+}
+function heatmap(h) {
+  const max = Math.max(1, ...h.flat());
+  const hours = Array.from({ length: 24 }, (_, x) => `<span class="hh">${x % 3 === 0 ? x : ''}</span>`).join('');
+  const rows = h.map((r, d) => `<i>${esc(wd(d))}</i>` + r.map((n, x) => `<u style="opacity:${n ? 0.15 + n / max * 0.85 : 0.06}" title="${esc(wd(d))} ${x}:00 · ${n} ${esc(tp('ad.ord'))}"></u>`).join('')).join('');
+  return `<div class="heat"><i></i>${hours}${rows}</div>`;
+}
 function renderStats(s) {
   const tt = s.totals, c = s.club, rv = s.reviews || { count: 0, avg: 0 };
   const total = tt.online + tt.cash || 1;
   const topMax = Math.max(1, ...s.topItems.map(i => i.qty));
   $('#view-stats').innerHTML = `
+  ${s.insights.length ? `<div class="card" style="margin-bottom:16px"><h2>${t('ad.insights')}</h2><div class="insights">${s.insights.map(i => `<div class="ins ${i.sev}">${esc(insightText(i))}</div>`).join('')}</div></div>` : ''}
   <div class="kpis">
-    <div class="kpi"><span>${t('ad.revenue')}</span><b>${fmt(tt.revenue)}</b><small>${t('ad.revenue.s')}</small></div>
-    <div class="kpi"><span>${t('ad.orders')}</span><b>${num(tt.orders)}</b><small>${t('ad.orders.s')}</small></div>
-    <div class="kpi"><span>${t('ad.avg')}</span><b>${fmt(tt.avgCheck)}</b></div>
+    <div class="kpi"><span>${t('ad.revenue')}</span><b>${fmt(tt.revenue)}${delta(tt.delta.revenue)}</b><small>${t('ad.revenue.s')}</small></div>
+    <div class="kpi"><span>${t('ad.orders')}</span><b>${num(tt.orders)}${delta(tt.delta.orders)}</b><small>${t('ad.orders.s')}</small></div>
+    <div class="kpi"><span>${t('ad.avg')}</span><b>${fmt(tt.avgCheck)}${delta(tt.delta.avgCheck)}</b></div>
     <div class="kpi"><span>${t('ad.money')}</span><b>${fmt(tt.money)}</b><small>${t('ad.money.s', { n: fmt(tt.bonusSpent) })}</small></div>
     <div class="kpi"><span>${t('ad.clubshare')}</span><b>${tt.orders ? Math.round(tt.members / tt.orders * 100) : 0}%</b><small>${t('ad.clubshare.s', { a: num(tt.members), b: num(tt.orders) })}</small></div>
     <div class="kpi"><span>${t('ad.members')}</span><b>${num(c.totalMembers)}</b><small>${t('ad.members.s', { a: num(c.newMembers), b: num(c.repeatMembers) })}</small></div>
     <div class="kpi"><span>${t('ad.bonus')}</span><b>${num(c.bonusOutstanding)}</b><small>${t('ad.bonus.s', { n: num(tt.cashbackAccrued) })}</small></div>
     <div class="kpi"><span>${t('ad.rating')}</span><b>${rv.count ? rv.avg.toFixed(1) : '—'}</b><small>${t('ad.rating.s', { n: num(rv.count) })}</small></div>
+    <div class="kpi"><span>${t('ad.sla')}</span><b>${tt.avgPrepMin ? tt.avgPrepMin + ' min' : '—'}</b><small>${t('ad.sla.s', { n: s.sla })}</small></div>
+    <div class="kpi"><span>${t('ad.attach')}</span><b>${s.upsell.attach === null ? '—' : s.upsell.attach + '%'}</b><small>${t('ad.attach.s')}</small></div>
+    <div class="kpi"><span>${t('ad.ret')}</span><b>${c.retention30 === null ? '—' : c.retention30 + '%'}</b><small>${c.retention30 === null ? t('ad.na') : t('ad.ret.s', { n: num(c.cohortSize) })}</small></div>
+    <div class="kpi"><span>${t('ad.cancel')}</span><b>${tt.cancelRate}%</b><small>${t('ad.cancel.s')}</small></div>
   </div>
   ${!tt.orders ? `<p class="empty" style="margin-top:20px">${t('ad.none')}</p>` : `
   <div class="grid">
     <div class="card wide"><h2>${t('ad.byday')}</h2>${bars(s.byDay, 'revenue', d => `${d.date}: ${fmt(d.revenue)}, ${d.orders} ${tp('ad.ord')}`)}
       <div class="axis"><span>${s.byDay[0].date}</span><span>${s.byDay[s.byDay.length - 1].date}</span></div></div>
-    <div class="card"><h2>${t('ad.byhour')}</h2>${bars(s.byHour, 'orders', h => `${s.byHour.indexOf(h)}:00, ${h.orders} ${tp('ad.ord')}`)}
+    <div class="card wide"><h2>${t('ad.heat')}</h2>${heatmap(s.heat)}</div>
+    <div class="card"><h2>${t('ad.byhour')}</h2>${bars(s.byHour, 'orders', h => `${h.hour}:00, ${h.orders} ${tp('ad.ord')}`)}
       <div class="axis"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div></div>
+    <div class="card"><h2>${t('ad.cats')}</h2><div class="list">${s.categoryMix.map(k => `<div><div class="r"><span>${esc(k.name)}</span><i>${k.share}% · ${fmt(k.revenue)}</i></div><div class="meter"><div style="width:${k.share}%"></div></div></div>`).join('')}</div></div>
     <div class="card"><h2>${t('ad.paytype')}</h2>
       <div class="list"><div class="r"><span>${t('ad.online')}</span><i>${num(tt.online)} · ${Math.round(tt.online / total * 100)}%</i></div><div class="meter"><div style="width:${tt.online / total * 100}%"></div></div>
       <div class="r" style="margin-top:8px"><span>${t('ad.cash')}</span><i>${num(tt.cash)} · ${Math.round(tt.cash / total * 100)}%</i></div><div class="meter"><div style="width:${tt.cash / total * 100}%"></div></div></div></div>
     <div class="card"><h2>${t('ad.top')}</h2><div class="list">${s.topItems.map(i => `<div><div class="r"><span>${esc(itemLabel(i))}</span><i>${num(i.qty)} ${t('ad.pcs')} · ${fmt(i.revenue)}</i></div><div class="meter"><div style="width:${i.qty / topMax * 100}%"></div></div></div>`).join('')}</div></div>
-    <div class="card"><h2>${t('ad.byloc')}</h2><div class="list">${s.byLocation.map(l => `<div class="r"><span>${esc(locName(l.id))}</span><i>${num(l.orders)} ${t('ad.ord')} · ${fmt(l.revenue)}</i></div>`).join('')}</div></div>
+    <div class="card wide"><h2>${t('ad.byloc')}</h2><div class="list">${s.byLocation.map(l => `<div class="r"><span>${esc(locName(l.id))}${l.rating ? ' · ★ ' + l.rating : ''}</span><i>${num(l.orders)} ${t('ad.ord')} · ${fmt(l.revenue)}${l.revenuePerOpenHour ? ' · ' + fmt(l.revenuePerOpenHour) + ' ' + t('ad.revloc') : ''}</i></div>`).join('')}</div></div>
     ${(s.staff && s.staff.length) ? `<div class="card wide"><h2>${t('ad.bybarista')}</h2><div class="list">${s.staff.map(b => `<div class="r"><span>${esc(b.name)}</span><i>${num(b.orders)} ${t('ad.ord')} · ${tp('ad.avgmin', { n: b.avgMin })}</i></div>`).join('')}</div></div>` : ''}
   </div>`}`;
 }
@@ -144,6 +168,50 @@ function renderReviews(list) {
     el.querySelector('[data-save]').onclick = async () => { await A('/api/admin/reviews/' + id, { method: 'PATCH', body: JSON.stringify({ reply: el.querySelector('textarea').value }) }); loadReviews(); };
     el.querySelector('[data-toggle]').onclick = async e => { await A('/api/admin/reviews/' + id, { method: 'PATCH', body: JSON.stringify({ status: e.currentTarget.dataset.toggle }) }); loadReviews(); };
   });
+}
+
+// ---------- меню и цены ----------
+async function loadMenu() {
+  const r = await A('/api/admin/menu');
+  if (r.status === 401 || r.status === 429) return logout();
+  const cats = await r.json();
+  $('#view-menu').innerHTML = `<div class="card"><h2>${t('mn.title')}</h2><p class="empty" style="margin-bottom:10px">${t('mn.hint')}</p>${cats.map(c => `<h3 style="margin:18px 0 4px;font-family:var(--serif)">${esc(tr(c, 'name'))}</h3>${c.items.map(i => `
+    <div class="mrow" data-id="${i.id}"><div class="nm">${esc(tr(i, 'name'))}${i.hidden ? ` <small>${t('mn.hidden')}</small>` : ''}</div>
+      ${i.variants.map((v, idx) => `<label style="font-size:.75rem;font-weight:700;color:var(--muted)">${esc(v.label || '')}<br><input type="number" min="1" step="1" data-v="${idx}" data-base="${v.base ?? ''}" value="${v.price ?? ''}" placeholder="${esc(tp('mn.noprice'))}" class="${v.overridden ? 'mod' : ''}"></label>`).join('')}
+      <button class="btn sm" data-save>${t('mn.save')}</button>
+      <button class="btn sec sm" data-reset>${t('mn.reset')}</button>
+      <button class="btn sec sm" data-hide="${i.hidden ? 0 : 1}">${i.hidden ? t('mn.show') : t('mn.hide')}</button></div>`).join('')}`).join('')}</div>`;
+  document.querySelectorAll('#view-menu .mrow').forEach(row => {
+    const id = row.dataset.id;
+    const patch = async body => { await A('/api/admin/menu/items/' + id, { method: 'PATCH', body: JSON.stringify(body) }); loadMenu(); };
+    row.querySelector('[data-save]').onclick = () => patch({ variants: [...row.querySelectorAll('input')].map(inp => inp.value === '' || +inp.value === +inp.dataset.base ? null : Math.round(+inp.value)) });
+    row.querySelector('[data-reset]').onclick = () => patch({ variants: [...row.querySelectorAll('input')].map(() => null) });
+    row.querySelector('[data-hide]').onclick = e => patch({ hidden: e.currentTarget.dataset.hide === '1' });
+  });
+}
+
+// ---------- система ----------
+async function loadSys() {
+  const [hr, ar] = await Promise.all([A('/api/admin/health'), A('/api/admin/audit?limit=40')]);
+  if (hr.status === 401 || hr.status === 429) return logout();
+  const h = await hr.json(), log = await ar.json();
+  const up = h.uptimeSec >= 3600 ? Math.floor(h.uptimeSec / 3600) + ' h' : Math.floor(h.uptimeSec / 60) + ' min';
+  $('#view-sys').innerHTML = `<div class="grid">
+    <div class="card wide"><h2>${t('sy.title')}</h2>
+      ${h.warnings.length ? h.warnings.map(w => `<div class="warnbox">${esc(tp('sy.w.' + w))}</div>`).join('') : `<div class="okbox">${t('sy.ok')}</div>`}
+      <div class="list" style="margin-top:12px">
+        <div class="r"><span>${t('sy.uptime')}</span><i>${up} · Node ${esc(h.node)}</i></div>
+        <div class="r"><span>${t('sy.db')}</span><i>${num(h.dbSizeKb)} KB</i></div>
+        <div class="r"><span>${t('sy.orders')}</span><i>${num(h.orders)}</i></div>
+        <div class="r"><span>${t('sy.customers')}</span><i>${num(h.customers)}</i></div>
+        <div class="r"><span>${t('sy.backup')}</span><i>${h.lastBackup ? dt(h.lastBackup) : t('sy.never')}</i></div>
+      </div>
+      <p style="margin-top:14px"><button class="btn" id="bk">${t('sy.download')}</button></p></div>
+    <div class="card wide"><h2>${t('sy.audit')}</h2>${log.length ? log.map(l => `<div class="logrow"><b>${dt(l.at)}</b><span>${esc(l.actor)}</span>${esc(l.action)} ${esc(l.detail)}</div>`).join('') : `<p class="empty">${t('sy.audit.none')}</p>`}</div></div>`;
+  $('#bk').onclick = async () => {
+    const r = await A('/api/admin/backup');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'drinkstar-backup.db'; document.body.appendChild(a); a.click(); a.remove();
+  };
 }
 
 // ---------- вход ----------

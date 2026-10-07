@@ -33,7 +33,14 @@ const cartTotal = () => cart.reduce((s, l) => s + lineUnit(l) * l.qty, 0);
 const cartCount = () => cart.reduce((s, l) => s + l.qty, 0);
 const maxBonus = () => member() ? Math.max(0, Math.min(ME.customer.bonus, Math.floor(cartTotal() * CONFIG.club.maxBonusPercent / 100))) : 0;
 function saveCart() { store.set('ds_cart', cart); renderCartBtn(); }
-function renderCartBtn() { $('#cartCount').textContent = cartCount(); }
+function renderCartBtn() {
+  $('#cartCount').textContent = cartCount();
+  const bar = $('#cartBar'), n = cartCount();
+  if (!bar) return;
+  let sum = 0; try { sum = cartTotal(); } catch { /* меню ещё не загружено */ }
+  bar.hidden = !n; $('#cbCount').textContent = n; $('#cbSum').textContent = fmt(sum);
+  document.body.classList.toggle('has-cartbar', !!n);
+}
 
 function addToCart(id, v) {
   const line = cart.find(l => l.id === id && l.v === v && !l.addons.length);
@@ -49,14 +56,16 @@ function toast(msg) {
 }
 
 // --- меню ---
+const isStopped = id => !!(form.locationId && MENU.stop && (MENU.stop[form.locationId] || []).includes(id));
 function buyButtons(it) {
+  if (isStopped(it.id)) return `<span class="soon sold">${t('menu.sold')}</span>`;
   return it.variants.map((v, i) => v.price == null ? `<span class="soon">${t('menu.soon')}</span>` :
     `<button class="add" data-id="${it.id}" data-v="${i}">${v.label && it.variants.length > 1 ? `<small>${numLabel(v.label)}</small>` : ''}${fmt(v.price)}<i>+</i></button>`).join('');
 }
 function showTab(id) {
   const c = MENU.categories.find(x => x.id === id);
   $('#panel').innerHTML = (c.note ? `<div class="menu-note">${esc(tr(c, 'note'))}</div>` : '') + c.items.map(i =>
-    `<div class="item"><div class="name">${esc(tr(i, 'name'))}${i.star ? ' <span class="star">' + ic('star') + '</span>' : ''}${tr(i, 'desc') ? `<small>${esc(tr(i, 'desc'))}</small>` : ''}</div><div class="dots"></div><div class="buy">${buyButtons(i)}</div></div>`).join('');
+    `<div class="item"><div class="name">${esc(tr(i, 'name'))}${i.star ? ' <span class="star">' + ic('star') + '</span>' : ''}${(MENU.popular || []).includes(i.id) ? ` <span class="hit">${t('menu.hit')}</span>` : ''}${tr(i, 'desc') ? `<small>${esc(tr(i, 'desc'))}</small>` : ''}</div><div class="dots"></div><div class="buy">${buyButtons(i)}</div></div>`).join('');
   [...$('#tabs').children].forEach(b => b.classList.toggle('active', b.dataset.id === id));
 }
 // фото напитка: либо отдельный файл (photo.src), либо кадр из общей картинки (photo.pos + photo.size)
@@ -125,6 +134,7 @@ function openDrawer(id) { closeAll(); $(id).classList.add('on'); $('#overlay').c
 $('#overlay').onclick = closeAll;
 addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
 $('#cartBtn').onclick = openCart;
+$('#cartBar').onclick = openCart;
 $('#closeCart').onclick = closeAll;
 
 // ====== КЛУБ ======
@@ -187,7 +197,7 @@ function renderClub() {
     body.innerHTML = `<p class="muted" style="margin:14px 0">${t('cl.sentto', { phone: esc(club.phone) })}</p>
       ${club.demoCode ? `<div class="demo-code">${t('cl.demo')} <b>${club.demoCode}</b></div>` : ''}
       <form class="form" id="codeForm" novalidate>
-        <label>${t('cl.code')}<input name="code" class="code" inputmode="numeric" maxlength="4" autocomplete="one-time-code" placeholder="••••" autofocus></label>
+        <label>${t('cl.code')}<input name="code" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="••••••" autofocus></label>
         <div class="err">${esc(club.err)}</div>
         <button class="btn fill submit" ${club.busy ? 'disabled' : ''}>${club.busy ? t('cl.checking') : t('cl.enter')}</button>
         <button type="button" class="linkbtn" id="back">${t('cl.changephone')}</button>

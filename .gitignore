@@ -6,3 +6,4 @@ data/drinkstar.db-shm
 .env
 .claude/
 *.zip
+.verify-data/
