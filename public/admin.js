@@ -1,10 +1,12 @@
+// токен входа хранится в localStorage: переключение языка и перезагрузка страницы не требуют повторного ввода PIN (сам токен живёт на сервере ограниченное время)
+const ST = { getItem: k => { try { return localStorage.getItem(k) || sessionStorage.getItem(k); } catch { return null; } }, setItem: (k, v) => { try { localStorage.setItem(k, v); } catch { try { sessionStorage.setItem(k, v); } catch { /* ignore */ } } }, removeItem: k => { try { localStorage.removeItem(k); } catch { /* ignore */ } try { sessionStorage.removeItem(k); } catch { /* ignore */ } } };
 const $ = s => document.querySelector(s);
 const { LANG, LOCALE } = window.I18N;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ /g, ' ') + ' ₸';
 const num = n => n.toLocaleString('ru-RU').replace(/ /g, ' ');
 const dt = ts => new Date(ts).toLocaleString(LOCALE, { timeZone: 'Asia/Almaty', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-let token = sessionStorage.getItem('ds_atoken') || '';
+let token = ST.getItem('ds_atoken') || '';
 let LOCS = {}, ITEMS = {}, view = 'stats';
 const H = () => ({ 'Content-Type': 'application/json', 'x-admin-token': token });
 const A = (url, opt = {}) => fetch(url, { ...opt, headers: H() });
@@ -245,7 +247,7 @@ async function loadSys() {
 }
 
 // ---------- вход ----------
-function logout() { if (token) fetch('/api/admin/logout', { method: 'POST', headers: H() }).catch(() => {}); sessionStorage.removeItem('ds_atoken'); token = ''; $('#app').hidden = true; $('#login').hidden = false; }
+function logout() { if (token) fetch('/api/admin/logout', { method: 'POST', headers: H() }).catch(() => {}); ST.removeItem('ds_atoken'); token = ''; $('#app').hidden = true; $('#login').hidden = false; }
 async function start() {
   const [locs, menu] = await Promise.all([fetch('/api/locations').then(r => r.json()), fetch('/api/menu').then(r => r.json())]);
   locs.forEach(l => LOCS[l.id] = l);
@@ -265,7 +267,7 @@ $('#csv').onclick = async e => {
 $('#loginForm').onsubmit = async e => {
   e.preventDefault();
   const r = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: $('#pin').value }) });
-  if (r.ok) { token = (await r.json()).token; sessionStorage.setItem('ds_atoken', token); start(); }
+  if (r.ok) { token = (await r.json()).token; ST.setItem('ds_atoken', token); start(); }
   else { $('#loginErr').textContent = r.status === 429 ? tp('ad.toomany') : tp('st.badpin'); $('#pin').value = ''; }
 };
 if (token) A('/api/admin/stats?days=1').then(r => r.ok ? start() : logout());

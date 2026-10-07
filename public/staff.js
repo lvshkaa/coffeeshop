@@ -1,10 +1,12 @@
+// токен входа хранится в localStorage: переключение языка и перезагрузка страницы не требуют повторного ввода PIN (сам токен живёт на сервере ограниченное время)
+const ST = { getItem: k => { try { return localStorage.getItem(k) || sessionStorage.getItem(k); } catch { return null; } }, setItem: (k, v) => { try { localStorage.setItem(k, v); } catch { try { sessionStorage.setItem(k, v); } catch { /* ignore */ } } }, removeItem: k => { try { localStorage.removeItem(k); } catch { /* ignore */ } try { sessionStorage.removeItem(k); } catch { /* ignore */ } } };
 const $ = s => document.querySelector(s);
 const { LANG, LOCALE } = window.I18N;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = n => n.toLocaleString('ru-RU').replace(/ /g, ' ');
 const store = { get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } } };
 
-let token = sessionStorage.getItem('ds_stoken') || '';
+let token = ST.getItem('ds_stoken') || '';
 let MENU_CATS = [];
 let ME = null, orders = [], timer, LOCS = {}, ITEMS = {}, ADDONS = {}, seen = null, lastRemind = 0, pollN = 0;
 let sound = store.get('ds_snd', 'on') !== 'off';
@@ -110,7 +112,7 @@ function showLogin(msg) { $('#app').hidden = true; $('#login').hidden = false; $
 async function logout(expired) {
   clearInterval(timer);
   if (!expired && token) { try { await api('/api/staff/logout', { method: 'POST' }); } catch { /* ignore */ } }
-  token = ''; ME = null; seen = null; sessionStorage.removeItem('ds_stoken');
+  token = ''; ME = null; seen = null; ST.removeItem('ds_stoken');
   showLogin(expired ? tp('st.sessionend') : '');
 }
 $('#out').onclick = () => logout(false);
@@ -143,7 +145,7 @@ $('#loginForm').onsubmit = async e => {
   const pin = $('#pin').value.trim(), locationId = $('#loginLoc').value;
   if (!locationId) { $('#loginErr').textContent = tp('st.chooseloc'); return; }
   const r = await fetch('/api/staff/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin, locationId }) });
-  if (r.ok) { const d = await r.json(); token = d.token; sessionStorage.setItem('ds_stoken', token); DSSound.play('ok'); enter(); }
+  if (r.ok) { const d = await r.json(); token = d.token; ST.setItem('ds_stoken', token); DSSound.play('ok'); enter(); }
   else { $('#loginErr').textContent = r.status === 429 ? tp('st.toomany') : r.status === 400 ? tp('st.chooseloc') : tp('st.badpin'); $('#pin').value = ''; }
 };
 
