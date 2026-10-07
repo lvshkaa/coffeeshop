@@ -179,3 +179,23 @@ describe('PIN сотрудников', () => {
     } finally { s.stop(); }
   });
 });
+
+describe('PIN на экране менеджера', () => {
+  test('менеджер видит PIN только после ввода своего PIN, бариста не может', async () => {
+    const s = await startServer();
+    try {
+      const A = await adminHeaders(s.call);
+      const c = await s.call('POST', '/api/admin/staff', { name: 'Ерлан', role: 'barista', locationId: 'turan50' }, A);
+      const M = await s.call('POST', '/api/staff/login', { pin: '1234', locationId: 'all' });
+      const H = { 'x-staff-token': M.json.token };
+      const bad = await s.call('POST', `/api/staff/team/${c.json.id}/pin`, { pin: '9999' }, H);
+      assert.equal(bad.status, 401);
+      const ok = await s.call('POST', `/api/staff/team/${c.json.id}/pin`, { pin: '1234' }, H);
+      assert.equal(ok.json.pin, c.json.pin);
+      const B = await s.call('POST', '/api/staff/login', { pin: c.json.pin, locationId: 'turan50' });
+      const hb = { 'x-staff-token': B.json.token };
+      assert.equal((await s.call('GET', '/api/staff/team', undefined, hb)).status, 403);
+      assert.equal((await s.call('POST', `/api/staff/team/${c.json.id}/pin`, { pin: c.json.pin }, hb)).status, 403);
+    } finally { s.stop(); }
+  });
+});

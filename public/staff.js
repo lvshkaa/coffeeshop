@@ -50,6 +50,7 @@ async function refreshMe() {
 }
 function setLive(ok) { const l = $('#live'); l.textContent = t(ok ? 'st.online' : 'st.offline'); l.classList.toggle('err', !ok); }
 function renderMe() {
+  $('#teamBtn').hidden = !ME || ME.role !== 'manager';
   if (!ME) return;
   $('#meName').textContent = ME.name;
   $('#meRole').textContent = t('st.role.' + ME.role);
@@ -174,3 +175,31 @@ const closeStop = () => { $('#stopDlg').hidden = true; };
 $('#stopClose').onclick = $('#stopX').onclick = closeStop;
 $('#stopDlg').onclick = e => { if (e.target.id === 'stopDlg') closeStop(); };
 addEventListener('keydown', e => { if (e.key === 'Escape') closeStop(); });
+
+// ---------- команда и PIN (только менеджер) ----------
+let askFor = null;
+async function openTeam() {
+  $('#teamDlg').hidden = false;
+  const r = await api('/api/staff/team');
+  if (!r.ok) { $('#teamDlg').hidden = true; return; }
+  const list = await r.json();
+  $('#teamList').innerHTML = list.filter(m => m.active).map(m => `<div class="trow" data-id="${m.id}"><div>${esc(m.name)}<small>${m.role === 'manager' ? tp('sf.manager') : tp('sf.barista')}${m.locationId && LOCS[m.locationId] ? ' · ' + esc(tr(LOCS[m.locationId], 'address')) : ''}</small></div><button class="end" type="button" data-show="${m.id}">${tp('st.team.show')}</button></div>`).join('');
+}
+$('#teamList').onclick = e => {
+  const b = e.target.closest('[data-show]'); if (!b) return;
+  askFor = b.dataset.show; $('#askErr').textContent = ''; $('#askPin').value = ''; $('#askDlg').hidden = false; $('#askPin').focus();
+};
+$('#askForm').onsubmit = async e => {
+  e.preventDefault();
+  const r = await api('/api/staff/team/' + askFor + '/pin', { method: 'POST', body: JSON.stringify({ pin: $('#askPin').value }) });
+  if (!r.ok) { $('#askErr').textContent = r.status === 429 ? (await r.json()).error : tp('st.ask.bad'); $('#askPin').value = ''; return; }
+  const d = await r.json();
+  $('#askDlg').hidden = true; $('#askPin').value = '';
+  const row = document.querySelector('#teamList .trow[data-id="' + askFor + '"]');
+  const btn = row.querySelector('button');
+  btn.outerHTML = d.pin ? `<span class="pv">${esc(d.pin)}</span>` : `<small>${esc(tp('st.team.nopin'))}</small>`;
+  if (d.pin) setTimeout(() => { const pv = row.querySelector('.pv'); if (pv) pv.outerHTML = `<button class="end" type="button" data-show="${askFor}">${tp('st.team.show')}</button>`; }, 15000);
+};
+$('#teamBtn').onclick = openTeam;
+$('#teamX').onclick = () => { $('#teamDlg').hidden = true; $('#askDlg').hidden = true; };
+$('#askX').onclick = () => { $('#askDlg').hidden = true; };

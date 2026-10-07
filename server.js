@@ -704,6 +704,25 @@ async function api(req, res, url) {
       setStatus(upd[1], status, me.id);
       return send(200, { ok: true });
     }
+    // менеджер: список команды и просмотр PIN после повторного ввода собственного PIN
+    if (p === '/api/staff/team' && req.method === 'GET') {
+      if (me.role !== 'manager') return send(403, { error: E(req, 'forbidden') });
+      return send(200, P('SELECT id, name, role, location_id AS locationId, active FROM staff ORDER BY active DESC, name').all());
+    }
+    const tp = p.match(/^\/api\/staff\/team\/(\d+)\/pin$/);
+    if (tp && req.method === 'POST') {
+      if (me.role !== 'manager') return send(403, { error: E(req, 'forbidden') });
+      const key = 'teampin:' + me.id;
+      if (limits.count(key, 600e3) >= 5) return send(429, { error: 'Слишком много попыток. Подождите 10 минут.' });
+      const body = await readBody(req);
+      const own = P('SELECT pin_hash FROM staff WHERE id = ?').get(me.id);
+      if (!own || hashPin(String(body.pin || '').trim()) !== own.pin_hash) { limits.fail(key, 600e3); audit(me.name, 'staff.pin.denied', '', req); return send(401, { error: 'Неверный PIN' }); }
+      limits.reset(key);
+      const row = P('SELECT name, pin_enc FROM staff WHERE id = ?').get(+tp[1]);
+      if (!row) return send(404, { error: 'Сотрудник не найден' });
+      audit(me.name, 'staff.pin.view', row.name, req);
+      return send(200, { pin: row.pin_enc ? decPin(row.pin_enc) : null });
+    }
     // стоп-лист: бариста отмечает, чего нет в наличии в его кофейне
     if (req.method === 'GET' && p === '/api/staff/stoplist') return send(200, { locationId: eff, stop: stopObject() });
     if (req.method === 'POST' && p === '/api/staff/stoplist') {
