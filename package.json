@@ -2,9 +2,12 @@
   "name": "drinkstar-site",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node server.js",
-    "reset": "node -e \"const f=require('fs');for(const x of ['drinkstar.db','drinkstar.db-wal','drinkstar.db-shm'])f.rmSync('data/'+x,{force:true});console.log('База очищена')\""
+    "reset": "node -e \"const f=require('fs');for(const x of ['drinkstar.db','drinkstar.db-wal','drinkstar.db-shm'])f.rmSync('data/'+x,{force:true});console.log('База очищена')\"",
+    "test": "node --test \"test/**/*.test.js\""
   }
 }

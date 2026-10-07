@@ -1,0 +1,1 @@
+document.addEventListener("click",function(e){var a=e.target.closest("a[href^=\"#\"]");if(!a)return;var id=a.getAttribute("href").slice(1);var el=id?document.getElementById(id):document.body;if(!el)return;e.preventDefault();var y=id==="top"||!id?0:el.getBoundingClientRect().top+window.pageYOffset-68;window.scrollTo({top:y,behavior:"smooth"});});
