@@ -562,7 +562,7 @@ async function api(req, res, url) {
     if (fails.length >= 8) return send(res, 429, { error: 'Слишком много попыток. Подождите 5 минут.' });
     const body = await readBody(req);
     const pin = String(body.pin || '').trim();
-    const row = /^\d{4,8}$/.test(pin) ? db.prepare('SELECT * FROM staff WHERE pin_hash = ? AND active = 1').get(hashPin(pin)) : null;
+    const row = (pin.length >= 4 && pin.length <= 32) ? db.prepare('SELECT * FROM staff WHERE pin_hash = ? AND active = 1').get(hashPin(pin)) : null;
     if (!row) { fails.push(now); buckets.set(key, fails); return send(res, 401, { error: 'Неверный PIN' }); }
     const locId = String(body.locationId || '');
     if (!(locById.has(locId) || (row.role === 'manager' && locId === 'all'))) return send(res, 400, { error: 'Выберите кофейню' });
