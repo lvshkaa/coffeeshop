@@ -10,12 +10,15 @@ let repeatTimer = null, pickedRating = 0, tokenGlobal = token;
 
 // когда заказ готов: сигнал, голос, вибрация; сигнал повторяется до трёх раз, пока клиент не коснётся экрана
 // Для языков из CLIP_LANGS есть записанная фраза (public/audio/ready-<язык>.mp3). Для остальных: сигнал и голос браузера.
-const CLIP_LANGS = ['ru', 'kk', 'en']; // записан только русский голос: он звучит человечнее синтеза и для остальных языков
-if (CLIP_LANGS.includes(LANG)) DSSound.preload('ready-ru', '/audio/ready-ru.mp3');
+// записанные фразы: ready-<язык>.mp3. Пока нет казахской, для неё играет русская (человечнее синтеза)
+const CLIP_LANGS = ['ru', 'kk', 'en'];
+const CLIP_FILE = { ru: 'ru', kk: 'ru', en: 'en' };
+const CLIP = 'ready-' + CLIP_FILE[LANG];
+if (CLIP_LANGS.includes(LANG)) DSSound.preload(CLIP, '/audio/' + CLIP + '.mp3');
 function playReady(o) {
-  if (CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru')) return;
+  if (CLIP_LANGS.includes(LANG) && DSSound.playClip(CLIP)) return;
   // запись ещё не готова или звук не разблокирован: играем тот же человеческий mp3 обычным плеером, синтез речи не используем
-  try { const au = new Audio('/audio/ready-ru.mp3'); au.play().catch(() => DSSound.play('ready')); } catch { DSSound.play('ready'); }
+  try { const au = new Audio('/audio/' + CLIP + '.mp3'); au.play().catch(() => DSSound.play('ready')); } catch { DSSound.play('ready'); }
 }
 function announceReady(o) {
   if (!sndOn()) return;
@@ -33,9 +36,9 @@ function wireExtras(o) {
     const wasRunning = DSSound.running();
     await DSSound.unlock();
     // звук включён, но браузер ещё не разрешил его: первое касание только «будит» звук
-    if (sndOn() && !wasRunning) { if (!(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru'))) DSSound.play('ok'); render(o); return; }
+    if (sndOn() && !wasRunning) { if (!(CLIP_LANGS.includes(LANG) && DSSound.playClip(CLIP))) DSSound.play('ok'); render(o); return; }
     try { localStorage.setItem('ds_csnd', sndOn() ? 'off' : 'on'); } catch { /* ignore */ }
-    if (sndOn() && !(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru'))) DSSound.play('ok');
+    if (sndOn() && !(CLIP_LANGS.includes(LANG) && DSSound.playClip(CLIP))) DSSound.play('ok');
     render(o);
   };
   const form = document.getElementById('rvForm');
