@@ -5,6 +5,7 @@ const money = n => n.toLocaleString('ru-RU').replace(/ /g, ' ');
 const store = { get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } } };
 
 let token = sessionStorage.getItem('ds_stoken') || '';
+let MENU_CATS = [];
 let ME = null, orders = [], timer, LOCS = {}, ITEMS = {}, ADDONS = {}, seen = null, lastRemind = 0, pollN = 0;
 let sound = store.get('ds_snd', 'on') !== 'off';
 let voice = store.get('ds_voice', 'on') !== 'off';
@@ -116,6 +117,7 @@ $('#out').onclick = () => logout(false);
 async function loadRefs() {
   const [locs, menu] = await Promise.all([fetch('/api/locations').then(r => r.json()), fetch('/api/menu').then(r => r.json())]);
   locs.forEach(l => LOCS[l.id] = l);
+  MENU_CATS = menu.categories;
   menu.categories.forEach(c => c.items.forEach(i => ITEMS[i.id] = i));
   menu.addons.forEach(a => ADDONS[a.id] = a);
   return locs;
@@ -150,3 +152,22 @@ $('#loginForm').onsubmit = async e => {
   setSndLabels();
   if (token) enter();
 })();
+
+// ---------- стоп-лист ----------
+async function openStop() {
+  const loc = ME.locationId !== 'all' ? ME.locationId : ($('#loc').value && $('#loc').value !== 'all' ? $('#loc').value : '');
+  $('#stopDlg').hidden = false;
+  if (!loc) { $('#stopHint').textContent = tp('st.stop.pick'); $('#stopList').innerHTML = ''; return; }
+  $('#stopHint').textContent = tp('st.stop.hint') + ' — ' + (LOCS[loc] ? tr(LOCS[loc], 'address') : loc);
+  const r = await api('/api/staff/stoplist');
+  const stop = new Set(((await r.json()).stop || {})[loc] || []);
+  $('#stopList').innerHTML = MENU_CATS.flatMap(c => c.items).filter(i => i.variants.some(v => typeof v.price === 'number')).map(i =>
+    `<div class="stoprow ${stop.has(i.id) ? 'off' : ''}"><span>${esc(tr(i, 'name'))}</span><button type="button" data-id="${i.id}" data-stopped="${stop.has(i.id) ? 0 : 1}">${stop.has(i.id) ? tp('menu.sold') : '✓'}</button></div>`).join('');
+  $('#stopList').onclick = async e => {
+    const b = e.target.closest('button[data-id]'); if (!b) return;
+    await api('/api/staff/stoplist', { method: 'POST', body: JSON.stringify({ itemId: b.dataset.id, stopped: b.dataset.stopped === '1', locationId: loc }) });
+    openStop();
+  };
+}
+$('#stopBtn').onclick = openStop;
+$('#stopClose').onclick = () => { $('#stopDlg').hidden = true; };

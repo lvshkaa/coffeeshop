@@ -72,6 +72,14 @@ body{font-family:var(--sans);background:var(--cream);color:var(--espresso);min-h
 .pay.due{background:#fde8d6;color:#9a4a22}
 .club{background:var(--caramel);color:#fff;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:800;display:inline-flex;align-items:center;gap:4px}
 .pay.bonus{background:#fff3df;color:#8a5a14}
+.stopdlg{position:fixed;inset:0;background:rgba(30,20,12,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.stopdlg[hidden]{display:none}
+.stopbox{background:var(--paper,#fffaf1);color:var(--espresso,#3a2a1e);border-radius:20px;padding:20px;width:min(560px,100%);max-height:88vh;overflow:auto}
+.stopbox h3{font-family:var(--serif);font-size:1.3rem;margin-bottom:6px}.stophint{color:var(--muted,#8a7560);font-size:.88rem;margin-bottom:12px}
+.stoprow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line,#e3d3ba);font-weight:700}
+.stoprow button{font:inherit;font-weight:800;border:1.5px solid var(--line,#e3d3ba);background:var(--cream,#f7efe1);color:inherit;border-radius:999px;padding:8px 16px;min-height:40px;cursor:pointer}
+.stoprow.off button{background:#f1dcd0;color:#9a3b1a;border-color:#e3b9a3}.stoprow.off span{text-decoration:line-through;opacity:.7}
+.stopbox .end{margin-top:14px}
 </style>
 </head>
 <body>
@@ -92,6 +100,7 @@ body{font-family:var(--sans);background:var(--cream);color:var(--espresso);min-h
     <span class="live" id="live"></span>
     <div class="lang"></div>
     <select id="loc" aria-label="Location" hidden></select>
+    <button class="snd" id="stopBtn" type="button"><span data-i18n="st.stop">Стоп-лист</span></button>
     <button class="snd" id="snd" type="button"></button>
     <button class="snd" id="voice" type="button"></button>
     <button class="end" id="out" type="button"><span data-ic="log-out"></span> <span data-i18n="st.endshift">Сдать смену</span></button>
@@ -104,6 +113,7 @@ body{font-family:var(--sans);background:var(--cream);color:var(--espresso);min-h
   </div>
 </div>
 
+<div class="stopdlg" id="stopDlg" hidden><div class="stopbox"><h3 data-i18n="st.stop">Стоп-лист</h3><p class="stophint" id="stopHint"></p><div id="stopList"></div><button class="end" id="stopClose" type="button" data-i18n="st.stop.close">Готово</button></div></div>
 <script src="icons.js"></script>
 <script src="i18n.js"></script>
 <script src="sound.js"></script>
