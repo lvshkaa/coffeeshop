@@ -23,11 +23,6 @@ function playReady(o) {
 function announceReady(o) {
   if (!sndOn()) return;
   playReady(o);
-  let n = 0;
-  clearInterval(repeatTimer);
-  repeatTimer = setInterval(() => { if (++n > 3) return clearInterval(repeatTimer); playReady(o); }, 20000);
-  const stop = () => { clearInterval(repeatTimer); document.removeEventListener('pointerdown', stop); };
-  document.addEventListener('pointerdown', stop);
 }
 
 function wireExtras(o) {
@@ -36,9 +31,8 @@ function wireExtras(o) {
     const wasRunning = DSSound.running();
     await DSSound.unlock();
     // звук включён, но браузер ещё не разрешил его: первое касание только «будит» звук
-    if (sndOn() && !wasRunning) { if (!(CLIP_LANGS.includes(LANG) && DSSound.playClip(CLIP))) DSSound.play('ok'); render(o); return; }
+    if (sndOn() && !wasRunning) { render(o); return; }
     try { localStorage.setItem('ds_csnd', sndOn() ? 'off' : 'on'); } catch { /* ignore */ }
-    if (sndOn() && !(CLIP_LANGS.includes(LANG) && DSSound.playClip(CLIP))) DSSound.play('ok');
     render(o);
   };
   const form = document.getElementById('rvForm');

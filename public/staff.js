@@ -10,18 +10,15 @@ let token = ST.getItem('ds_stoken') || '';
 let MENU_CATS = [];
 let ME = null, orders = [], timer, LOCS = {}, ITEMS = {}, ADDONS = {}, seen = null, lastRemind = 0, pollN = 0;
 let sound = store.get('ds_snd', 'on') !== 'off';
-let voice = store.get('ds_voice', 'on') !== 'off';
 
 const api = (url, opt = {}) => fetch(url, { ...opt, headers: { 'Content-Type': 'application/json', 'x-staff-token': token } });
 
 // ---------- звук ----------
 function setSndLabels() {
   $('#snd').classList.toggle('off', !sound); $('#snd').innerHTML = t(sound ? 'st.sound' : 'st.mute');
-  $('#voice').classList.toggle('off', !voice); $('#voice').innerHTML = t(voice ? 'st.voiceon' : 'st.voiceoff');
 }
 function notifyNew(list) {
   if (sound) DSSound.play('new');
-  if (voice) setTimeout(() => DSSound.speak(tp('snd.new', { n: list.map(o => o.number).join(', ') }), LANG), 1400);
 }
 // напоминание: заказ ждёт больше 45 секунд, сигнал каждые 30 секунд
 setInterval(() => {
@@ -30,7 +27,6 @@ setInterval(() => {
   $('#audioBanner').hidden = !(sound && !$('#app').hidden && !DSSound.running());
 }, 2000);
 $('#snd').onclick = () => { sound = !sound; store.set('ds_snd', sound ? 'on' : 'off'); setSndLabels(); if (sound) DSSound.play('ok'); };
-$('#voice').onclick = () => { voice = !voice; store.set('ds_voice', voice ? 'on' : 'off'); setSndLabels(); if (voice) DSSound.speak(tp('snd.new', { n: 1 }), LANG); };
 $('#audioBanner').onclick = async () => { await DSSound.unlock(); DSSound.play('ok'); };
 
 // ---------- данные ----------
