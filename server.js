@@ -295,6 +295,7 @@ function maintenance() {
     P('DELETE FROM staff_sessions WHERE expires_at < ?').run(now);
     P('DELETE FROM sessions WHERE expires_at < ?').run(now);
     P('DELETE FROM admin_sessions WHERE expires_at < ?').run(now);
+    P('DELETE FROM revoked_tokens WHERE expires_at < ?').run(now);
     P('DELETE FROM sms_codes WHERE expires_at < ?').run(now - 3600e3);
     P('DELETE FROM audit WHERE at < ?').run(now - 365 * 86400e3);
     limits.sweep();
@@ -397,16 +398,47 @@ function ordersCsv(days) {
 }
 
 // --- личные аккаунты персонала ---
+// Токены входа подписаны (HMAC): вход переживает перезапуск сервиса и очистку базы (на бесплатном Render она сбрасывается).
+// Ключ берётся из PIN в настройках, а не из базы. Смена PIN, отключение сотрудника и «выйти» отзывают токен.
+const SIGN_KEY = crypto.createHash('sha256').update('ds-session:' + ADMIN_PIN + ':' + STAFF_PIN).digest();
+const hmac40 = payload => crypto.createHmac('sha256', SIGN_KEY).update(payload).digest('hex').slice(0, 40);
+function mintToken(kind, id, loc, ttl, fp) {
+  const now = Date.now();
+  const payload = [kind, id, loc, now, now + ttl, crypto.randomBytes(6).toString('hex'), fp].join('|');
+  return Buffer.from(payload).toString('base64url') + '.' + hmac40(payload);
+}
+function readToken(token, kind) {
+  const [body, sig] = String(token || '').split('.');
+  if (!body || !sig) return null;
+  const payload = Buffer.from(body, 'base64url').toString('utf8');
+  const want = hmac40(payload);
+  if (sig.length !== want.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(want))) return null;
+  const [k, id, loc, iat, exp, , fp] = payload.split('|');
+  if (k !== kind || +exp < Date.now()) return null;
+  if (P('SELECT 1 FROM revoked_tokens WHERE token_hash = ?').get(sha(token))) return null;
+  return { id: +id, loc, iat: +iat, exp: +exp, fp };
+}
+const revokeToken = (token, ttl) => { if (token) P('INSERT OR REPLACE INTO revoked_tokens (token_hash, expires_at) VALUES (?,?)').run(sha(token), Date.now() + ttl); };
 function staffFrom(req) {
   const t = String(req.headers['x-staff-token'] || '');
   if (!t) return null;
-  return P(`SELECT s.id, s.name, s.role, ss.shift_id, sh.location_id AS loc, sh.started_at
+  const known = P(`SELECT s.id, s.name, s.role, ss.shift_id, sh.location_id AS loc, sh.started_at
       FROM staff_sessions ss JOIN staff s ON s.id = ss.staff_id LEFT JOIN shifts sh ON sh.id = ss.shift_id
-      WHERE ss.token_hash = ? AND ss.expires_at > ? AND s.active = 1`).get(sha(t), Date.now()) || null;
+      WHERE ss.token_hash = ? AND ss.expires_at > ? AND s.active = 1`).get(sha(t), Date.now());
+  if (known) return known;
+  const tk = readToken(t, 's');
+  if (!tk) return null;
+  const row = P('SELECT id, name, role, pin_hash, location_id FROM staff WHERE id = ? AND active = 1').get(tk.id);
+  if (!row || row.pin_hash.slice(0, 8) !== tk.fp) return null;
+  if (row.role === 'barista' && row.location_id && row.location_id !== tk.loc) return null;
+  return { id: row.id, name: row.name, role: row.role, shift_id: null, loc: tk.loc, started_at: tk.iat };
 }
 function adminFrom(req) {
   const t = String(req.headers['x-admin-token'] || '');
-  return !!t && !!P('SELECT 1 FROM admin_sessions WHERE token_hash = ? AND expires_at > ?').get(sha(t), Date.now());
+  if (!t) return false;
+  if (P('SELECT 1 FROM admin_sessions WHERE token_hash = ? AND expires_at > ?').get(sha(t), Date.now())) return true;
+  const tk = readToken(t, 'a');
+  return !!tk && tk.fp === sha(ADMIN_PIN).slice(0, 8);
 }
 function randomPin() {
   for (let i = 0; i < 100; i++) {
@@ -663,7 +695,7 @@ async function api(req, res, url) {
     if (!row) { limits.fail(ipKey, 300e3); limits.fail('stafflogin:*', 900e3); audit('staff?', 'staff.login.fail', '', req); return send(401, { error: 'Неверный PIN' }); }
     const locId = (row.role === 'barista' && row.location_id && locById.has(row.location_id)) ? row.location_id : String(body.locationId || '');
     if (!(locById.has(locId) || (row.role === 'manager' && locId === 'all'))) return send(400, { error: 'Выберите кофейню' });
-    const token = crypto.randomBytes(24).toString('hex');
+    const token = mintToken('s', row.id, locId, STAFF_SESSION_TTL, row.pin_hash.slice(0, 8));
     const now = Date.now();
     const shiftId = tx(db, () => {
       P('UPDATE shifts SET ended_at = ? WHERE staff_id = ? AND ended_at IS NULL').run(now, row.id);
@@ -684,6 +716,7 @@ async function api(req, res, url) {
     if (req.method === 'POST' && p === '/api/staff/logout') {
       endShift(me.shift_id);
       P('DELETE FROM staff_sessions WHERE token_hash = ?').run(sha(String(req.headers['x-staff-token'])));
+      revokeToken(String(req.headers['x-staff-token']), STAFF_SESSION_TTL);
       return send(200, { ok: true });
     }
     if (req.method === 'GET' && p === '/api/staff/orders') {
@@ -745,13 +778,14 @@ async function api(req, res, url) {
     const body = await readBody(req);
     if (!same(String(body.pin || ''), ADMIN_PIN)) { limits.fail(ipKey, 300e3); limits.fail('adminlogin:*', 900e3); audit('admin?', 'admin.login.fail', '', req); return send(401, { error: 'Неверный PIN' }); }
     limits.reset(ipKey);
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = mintToken('a', 0, '', ADMIN_SESSION_TTL, sha(ADMIN_PIN).slice(0, 8));
     P('INSERT INTO admin_sessions (token_hash, expires_at) VALUES (?,?)').run(sha(token), Date.now() + ADMIN_SESSION_TTL);
     audit('admin', 'admin.login', '', req);
     return send(200, { token });
   }
   if (req.method === 'POST' && p === '/api/admin/logout') {
     P('DELETE FROM admin_sessions WHERE token_hash = ?').run(sha(String(req.headers['x-admin-token'] || '')));
+    revokeToken(String(req.headers['x-admin-token'] || ''), ADMIN_SESSION_TTL);
     return send(200, { ok: true });
   }
   if (p.startsWith('/api/admin/')) {

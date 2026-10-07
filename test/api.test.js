@@ -199,3 +199,23 @@ describe('PIN на экране менеджера', () => {
     } finally { s.stop(); }
   });
 });
+
+describe('вход переживает сброс базы', () => {
+  test('подписанный токен работает без записи в базе, после выхода отзывается', async () => {
+    const { DatabaseSync } = require('node:sqlite');
+    const path = require('node:path');
+    const s = await startServer();
+    try {
+      const L = await s.call('POST', '/api/staff/login', { pin: '1234', locationId: 'all' });
+      const H = { 'x-staff-token': L.json.token };
+      const A = await adminHeaders(s.call);
+      const db = new DatabaseSync(path.join(s.dataDir, 'drinkstar.db'));
+      db.exec('DELETE FROM staff_sessions; DELETE FROM admin_sessions;'); db.close();
+      assert.equal((await s.call('GET', '/api/staff/me', undefined, H)).status, 200);
+      assert.equal((await s.call('GET', '/api/admin/health', undefined, A)).status, 200);
+      await s.call('POST', '/api/staff/logout', {}, H);
+      assert.equal((await s.call('GET', '/api/staff/me', undefined, H)).status, 401);
+      assert.equal((await s.call('GET', '/api/staff/me', undefined, { 'x-staff-token': L.json.token.slice(0, -3) + 'abc' })).status, 401);
+    } finally { s.stop(); }
+  });
+});
