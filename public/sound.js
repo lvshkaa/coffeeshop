@@ -59,5 +59,34 @@
   }
   if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch { /* ignore */ } }
 
-  window.DSSound = { unlock, play, speak, running: () => !!ctx && ctx.state === 'running' };
+  // записанные фразы (mp3): загружаем и декодируем заранее, играем через WebAudio.
+  // Так запись звучит сразу и на iPhone, как только звук «разбужен» касанием.
+  const clips = {};
+  function preload(name, url) {
+    if (clips[name]) return clips[name].promise;
+    const entry = clips[name] = { buf: null, promise: null };
+    entry.promise = fetch(url)
+      .then(r => { if (!r.ok) throw new Error('нет файла'); return r.arrayBuffer(); })
+      .then(ab => new Promise((resolve, reject) => {
+        ctx = ctx || new AC();
+        ctx.decodeAudioData(ab, resolve, reject);   // форма с колбэками работает и в старом Safari
+      }))
+      .then(buf => { entry.buf = buf; return buf; })
+      .catch(() => null);
+    return entry.promise;
+  }
+  const hasClip = name => !!(clips[name] && clips[name].buf);
+  // возвращает длительность в секундах, если запись заиграла, иначе false
+  function playClip(name) {
+    unlock();
+    const c = clips[name];
+    if (!c || !c.buf || !ctx || ctx.state !== 'running') return false;
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = c.buf; src.connect(ctx.destination); src.start();
+      return c.buf.duration;
+    } catch { return false; }
+  }
+
+  window.DSSound = { unlock, play, speak, preload, hasClip, playClip, running: () => !!ctx && ctx.state === 'running' };
 })();

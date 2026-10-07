@@ -82,13 +82,20 @@ const sndOn = () => { try { return localStorage.getItem('ds_csnd') !== 'off'; } 
 let repeatTimer = null, pickedRating = 0, tokenGlobal = token;
 
 // когда заказ готов: сигнал, голос, вибрация; сигнал повторяется до трёх раз, пока клиент не коснётся экрана
-function announceReady(o) {
-  if (!sndOn()) return;
+// Для языков из CLIP_LANGS есть записанная фраза (public/audio/ready-<язык>.mp3). Для остальных: сигнал и голос браузера.
+const CLIP_LANGS = ['ru'];
+if (CLIP_LANGS.includes(LANG)) DSSound.preload('ready-' + LANG, '/audio/ready-' + LANG + '.mp3');
+function playReady(o) {
+  if (CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-' + LANG)) return;
   DSSound.play('ready');
   setTimeout(() => DSSound.speak(tp('snd.readyself', { n: o.number }), LANG), 1300);
+}
+function announceReady(o) {
+  if (!sndOn()) return;
+  playReady(o);
   let n = 0;
   clearInterval(repeatTimer);
-  repeatTimer = setInterval(() => { if (++n > 3) return clearInterval(repeatTimer); DSSound.play('ready'); }, 20000);
+  repeatTimer = setInterval(() => { if (++n > 3) return clearInterval(repeatTimer); playReady(o); }, 20000);
   const stop = () => { clearInterval(repeatTimer); document.removeEventListener('pointerdown', stop); };
   document.addEventListener('pointerdown', stop);
 }
@@ -99,9 +106,9 @@ function wireExtras(o) {
     const wasRunning = DSSound.running();
     await DSSound.unlock();
     // звук включён, но браузер ещё не разрешил его: первое касание только «будит» звук
-    if (sndOn() && !wasRunning) { DSSound.play('ok'); render(o); return; }
+    if (sndOn() && !wasRunning) { if (!(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-' + LANG))) DSSound.play('ok'); render(o); return; }
     try { localStorage.setItem('ds_csnd', sndOn() ? 'off' : 'on'); } catch { /* ignore */ }
-    if (sndOn()) DSSound.play('ok');
+    if (sndOn() && !(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-' + LANG))) DSSound.play('ok');
     render(o);
   };
   const form = document.getElementById('rvForm');
