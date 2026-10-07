@@ -165,3 +165,17 @@ describe('точка бариста', () => {
     } finally { s.stop(); }
   });
 });
+
+describe('PIN сотрудников', () => {
+  test('владелец может посмотреть PIN сотрудника', async () => {
+    const s = await startServer();
+    try {
+      const A = await adminHeaders(s.call);
+      const c = await s.call('POST', '/api/admin/staff', { name: 'Дана', role: 'barista' }, A);
+      const v = await s.call('GET', '/api/admin/staff/' + c.json.id + '/pin', undefined, A);
+      assert.equal(v.json.pin, c.json.pin);
+      const noauth = await s.call('GET', '/api/admin/staff/' + c.json.id + '/pin');
+      assert.equal(noauth.status, 401);
+    } finally { s.stop(); }
+  });
+});

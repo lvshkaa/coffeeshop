@@ -121,6 +121,7 @@ function renderStaff(list, shifts) {
         <div class="meta">${s.onShift ? `<span class="badge on">${t('sf.onshift')}</span> ${esc(locName(s.onShift))}` : `<span class="badge off">${t('sf.offshift')}</span>`}
           · ${s.lastShift ? `${t('sf.lastshift')}: ${dt(s.lastShift)}` : t('sf.never')} · ${t('sf.handled', { n: s.handled30 })}</div>
         <select class="homesel" data-home="${s.id}" aria-label="${esc(tp('sf.home'))}"><option value="">${t('sf.nohome')}</option>${Object.values(LOCS).map(l => `<option value="${l.id}"${s.locationId === l.id ? ' selected' : ''}>${esc(tr(l, 'address'))}</option>`).join('')}</select>
+        <button class="btn sec sm" data-showpin="${s.id}">${ic('eye')} ${t('sf.showpin')}</button>
         <button class="btn sec sm" data-act="reset" data-id="${s.id}">${ic('key-round')} ${t('sf.reset')}</button>
         <button class="btn ${s.active ? 'danger' : 'sec'} sm" data-act="${s.active ? 'off' : 'on'}" data-id="${s.id}">${s.active ? t('sf.deactivate') : t('sf.activate')}</button>
       </div>`).join('')}
@@ -139,6 +140,12 @@ function renderStaff(list, shifts) {
     newPinMsg = tp('sf.pinis', { name: esc(f.name.value), pin: '@@' + d.pin + '@@' }).replace(/@@(\d+)@@/, '<b>$1</b>');
     loadStaff();
   };
+  document.querySelectorAll('[data-showpin]').forEach(b => b.onclick = async () => {
+    const row = list.find(x => String(x.id) === b.dataset.showpin);
+    const d = await (await A('/api/admin/staff/' + b.dataset.showpin + '/pin')).json();
+    newPinMsg = d.pin ? tp('sf.pinis', { name: esc(row.name), pin: '@@' + d.pin + '@@' }).replace(/@@(\d+)@@/, '<b>$1</b>') : esc(tp('sf.pinunknown', { name: row.name }));
+    loadStaff();
+  });
   document.querySelectorAll('[data-home]').forEach(sel => sel.onchange = async () => {
     await A('/api/admin/staff/' + sel.dataset.home, { method: 'PATCH', body: JSON.stringify({ locationId: sel.value }) });
     newPinMsg = esc(tp('sf.moved'));

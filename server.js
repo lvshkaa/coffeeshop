@@ -111,10 +111,26 @@ const metaGet = k => P('SELECT value FROM meta WHERE key = ?').get(k)?.value;
 if (!metaGet('pin_secret')) P('INSERT INTO meta (key, value) VALUES (?, ?)').run('pin_secret', crypto.randomBytes(32).toString('hex'));
 const PIN_SECRET = metaGet('pin_secret');
 const hashPin = pin => crypto.createHmac('sha256', PIN_SECRET).update(String(pin)).digest('hex');
+// PIN сотрудника хранится ещё и в зашифрованном виде (AES-256-GCM), чтобы владелец мог напомнить его, если не записали
+const PIN_KEY = crypto.createHash('sha256').update(PIN_SECRET + ':enc').digest();
+function encPin(pin) {
+  const iv = crypto.randomBytes(12), c = crypto.createCipheriv('aes-256-gcm', PIN_KEY, iv);
+  const ct = Buffer.concat([c.update(String(pin), 'utf8'), c.final()]);
+  return [iv, c.getAuthTag(), ct].map(b => b.toString('hex')).join(':');
+}
+function decPin(str) {
+  try {
+    const [iv, tag, ct] = String(str).split(':').map(h => Buffer.from(h, 'hex'));
+    const c = crypto.createDecipheriv('aes-256-gcm', PIN_KEY, iv); c.setAuthTag(tag);
+    return Buffer.concat([c.update(ct), c.final()]).toString('utf8');
+  } catch { return null; }
+}
 // первый запуск: STAFF_PIN становится PIN менеджера; бариста владелец заводит в аналитике
 if (P('SELECT COUNT(*) n FROM staff').get().n === 0) {
-  P('INSERT INTO staff (name, pin_hash, role, active, created_at) VALUES (?,?,?,?,?)').run('Менеджер', hashPin(STAFF_PIN), 'manager', 1, Date.now());
+  P('INSERT INTO staff (name, pin_hash, role, active, created_at, pin_enc) VALUES (?,?,?,?,?,?)').run('Менеджер', hashPin(STAFF_PIN), 'manager', 1, Date.now(), encPin(STAFF_PIN));
 }
+// PIN менеджера из STAFF_PIN можно восстановить, даже если аккаунт создан до появления шифрования
+for (const r of P('SELECT id, pin_hash FROM staff WHERE pin_enc IS NULL').all()) if (r.pin_hash === hashPin(STAFF_PIN)) P('UPDATE staff SET pin_enc = ? WHERE id = ?').run(encPin(STAFF_PIN), r.id);
 const STATUSES = ['new', 'preparing', 'ready', 'done', 'cancelled'];
 const ACTIVE = ['new', 'preparing', 'ready'];
 const VALID = "status NOT IN ('cancelled','awaiting_payment')";
@@ -742,9 +758,16 @@ async function api(req, res, url) {
         if (!/^\d{6,8}$/.test(pin)) return send(400, { error: 'PIN: от 6 до 8 цифр' });
         if (P('SELECT 1 FROM staff WHERE pin_hash = ?').get(hashPin(pin))) return send(409, { error: 'Такой PIN уже занят, выберите другой' });
       } else pin = randomPin();
-      const id = P('INSERT INTO staff (name, pin_hash, role, active, created_at, location_id) VALUES (?,?,?,?,?,?)').run(name, hashPin(pin), role, 1, Date.now(), home).lastInsertRowid;
+      const id = P('INSERT INTO staff (name, pin_hash, role, active, created_at, location_id, pin_enc) VALUES (?,?,?,?,?,?,?)').run(name, hashPin(pin), role, 1, Date.now(), home, encPin(pin)).lastInsertRowid;
       audit('admin', 'staff.create', `${name} (${role})`, req);
       return send(201, { id, pin });
+    }
+    const sp = p.match(/^\/api\/admin\/staff\/(\d+)\/pin$/);
+    if (req.method === 'GET' && sp) {
+      const row = P('SELECT name, pin_enc FROM staff WHERE id = ?').get(+sp[1]);
+      if (!row) return send(404, { error: 'Сотрудник не найден' });
+      audit('admin', 'staff.pin.view', row.name, req);
+      return send(200, { pin: row.pin_enc ? decPin(row.pin_enc) : null });
     }
     const st = p.match(/^\/api\/admin\/staff\/(\d+)$/);
     if (req.method === 'PATCH' && st) {
@@ -768,7 +791,7 @@ async function api(req, res, url) {
         }
         if (body.resetPin) {
           newPin = randomPin();
-          P('UPDATE staff SET pin_hash = ? WHERE id = ?').run(hashPin(newPin), row.id);
+          P('UPDATE staff SET pin_hash = ?, pin_enc = ? WHERE id = ?').run(hashPin(newPin), encPin(newPin), row.id);
           P('DELETE FROM staff_sessions WHERE staff_id = ?').run(row.id);
         }
       });

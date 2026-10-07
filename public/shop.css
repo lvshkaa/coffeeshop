@@ -235,3 +235,6 @@ html[lang="kk"] .myorder{font-size:.82rem}
 .nav-actions>*{flex-shrink:0}.nav ul{min-width:0}
 @media(max-width:1500px){html[lang="kk"] .nav ul{display:none}html[lang="kk"] .nav-actions{margin-left:auto}}
 html[lang="kk"] #hdr .wrap{max-width:1400px}
+/* шапка: ссылки не наезжают на выбор языка */
+#hdr .wrap{max-width:1400px}
+@media(max-width:1400px){.nav ul{display:none}.nav-actions{margin-left:auto}}
