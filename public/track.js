@@ -10,10 +10,10 @@ let repeatTimer = null, pickedRating = 0, tokenGlobal = token;
 
 // когда заказ готов: сигнал, голос, вибрация; сигнал повторяется до трёх раз, пока клиент не коснётся экрана
 // Для языков из CLIP_LANGS есть записанная фраза (public/audio/ready-<язык>.mp3). Для остальных: сигнал и голос браузера.
-const CLIP_LANGS = ['ru'];
-if (CLIP_LANGS.includes(LANG)) DSSound.preload('ready-' + LANG, '/audio/ready-' + LANG + '.mp3');
+const CLIP_LANGS = ['ru', 'kk', 'en']; // записан только русский голос: он звучит человечнее синтеза и для остальных языков
+if (CLIP_LANGS.includes(LANG)) DSSound.preload('ready-ru', '/audio/ready-ru.mp3');
 function playReady(o) {
-  if (CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-' + LANG)) return;
+  if (CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru')) return;
   DSSound.play('ready');
   setTimeout(() => DSSound.speak(tp('snd.readyself', { n: o.number }), LANG), 1300);
 }
@@ -33,9 +33,9 @@ function wireExtras(o) {
     const wasRunning = DSSound.running();
     await DSSound.unlock();
     // звук включён, но браузер ещё не разрешил его: первое касание только «будит» звук
-    if (sndOn() && !wasRunning) { if (!(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-' + LANG))) DSSound.play('ok'); render(o); return; }
+    if (sndOn() && !wasRunning) { if (!(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru'))) DSSound.play('ok'); render(o); return; }
     try { localStorage.setItem('ds_csnd', sndOn() ? 'off' : 'on'); } catch { /* ignore */ }
-    if (sndOn() && !(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-' + LANG))) DSSound.play('ok');
+    if (sndOn() && !(CLIP_LANGS.includes(LANG) && DSSound.playClip('ready-ru'))) DSSound.play('ok');
     render(o);
   };
   const form = document.getElementById('rvForm');
@@ -93,7 +93,7 @@ function render(o) {
       ${o.cashbackDone ? `<div class="bonus-tag">${t('tr.bonusdone')}</div>` : (o.member && o.cashback ? `<div class="bonus-tag">${t('tr.bonussoon', { n: o.cashback })}</div>` : '')}
     </div>
     ${reviewBlock}
-    ${o.status === 'done' || o.status === 'cancelled' ? `<button class="send" id="again" type="button">${t('tr.again')}</button>` : ''}
+    ${o.status === 'done' || o.status === 'cancelled' ? `<button class="again" id="again" type="button">${t('tr.again')}</button>` : ''}
     <a class="back" href="/">${t('tr.home')}</a>`;
   const again = document.getElementById('again');
   if (again) again.onclick = () => {
