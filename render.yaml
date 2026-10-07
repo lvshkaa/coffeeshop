@@ -24,5 +24,9 @@ services:
         value: demo          # демо: код входа показывается на странице. На боевом: имя провайдера
       - key: ALLOW_DEMO
         value: "1"           # разрешает демо-оплату и демо-SMS для показа клиенту. На боевом УДАЛИТЕ эту строку
+      - key: BACKUP_GITHUB_REPO
+        sync: false          # куда складывать копии данных: ваш-логин/drinkstar-backups (приватный репозиторий)
+      - key: BACKUP_GITHUB_TOKEN
+        sync: false          # токен GitHub с правом записи в этот репозиторий (см. README)
       - key: BASE_URL
         sync: false          # адрес сайта, который выдаст Render, потом ваш домен (можно оставить пустым)

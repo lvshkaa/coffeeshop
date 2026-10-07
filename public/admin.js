@@ -236,10 +236,12 @@ async function loadSys() {
         <div class="r"><span>${t('sy.db')}</span><i>${num(h.dbSizeKb)} KB</i></div>
         <div class="r"><span>${t('sy.orders')}</span><i>${num(h.orders)}</i></div>
         <div class="r"><span>${t('sy.customers')}</span><i>${num(h.customers)}</i></div>
+        <div class="r"><span>${t('sy.off')}</span><i>${!h.offsite.enabled ? t('sy.off.off') : h.offsite.ok === null ? t('sy.off.wait') : h.offsite.ok ? t('sy.off.ok', { t: dt(h.offsite.at) }) : t('sy.off.fail')}</i></div>
         <div class="r"><span>${t('sy.backup')}</span><i>${h.lastBackup ? dt(h.lastBackup) : t('sy.never')}</i></div>
       </div>
-      <p style="margin-top:14px"><button class="btn" id="bk">${t('sy.download')}</button></p></div>
+      <p style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="bk">${t('sy.download')}</button>${h.offsite.enabled ? `<button class="btn sec" id="offnow">${t('sy.off.now')}</button>` : ''}</p></div>
     <div class="card wide"><h2>${t('sy.audit')}</h2>${log.length ? log.map(l => `<div class="logrow"><b>${dt(l.at)}</b><span>${esc(l.actor)}</span>${esc(l.action)} ${esc(l.detail)}</div>`).join('') : `<p class="empty">${t('sy.audit.none')}</p>`}</div></div>`;
+  if ($('#offnow')) $('#offnow').onclick = async () => { $('#offnow').disabled = true; await A('/api/admin/offsite', { method: 'POST' }); loadSys(); };
   $('#bk').onclick = async () => {
     const r = await A('/api/admin/backup');
     const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = 'drinkstar-backup.db'; document.body.appendChild(a); a.click(); a.remove();
